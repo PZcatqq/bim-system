@@ -21,6 +21,7 @@
     .stat-grid{grid-template-columns:repeat(2,1fr)!important;}
     .proj-meta-grid{grid-template-columns:1fr 1fr!important;}
     .form-grid{grid-template-columns:1fr!important;}
+    .member-grid{grid-template-columns:repeat(2,1fr)!important;}
   }
   .logo{padding:0 20px 14px;border-bottom:1px solid var(--border);margin-bottom:10px;}
   .logo-title{font-size:15px;font-weight:600;}
@@ -61,6 +62,7 @@
   .badge-red{background:var(--red-bg);color:var(--red);}
   .badge-amber{background:var(--amber-bg);color:var(--amber);}
   .badge-green{background:var(--green-bg);color:var(--green);}
+  .badge-gray{background:var(--surface2);color:var(--text2);}
   .alert-info{flex:1;min-width:0;}
   .alert-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .alert-sub{font-size:12px;color:var(--text2);margin-top:2px;}
@@ -124,6 +126,14 @@
   .filter-pill.active{background:var(--text);color:#fff;border-color:var(--text);}
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
   .toast.show{opacity:1;}
+  /* Member page */
+  .member-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+  .member-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;}
+  .member-avatar{width:44px;height:44px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:var(--text2);flex-shrink:0;}
+  .member-name{font-size:15px;font-weight:600;}
+  .member-role{font-size:12px;color:var(--text3);}
+  .member-proj-count{font-size:12px;color:var(--text2);}
+  .member-actions{display:flex;gap:6px;margin-top:4px;}
 </style>
 </head>
 <body>
@@ -136,11 +146,13 @@
     <div class="nav-item active" id="nav-dashboard" onclick="BIM.showPage('dashboard')"><span>◉</span>儀表板</div>
     <div class="nav-item" id="nav-projects" onclick="BIM.showPage('projects')"><span>▦</span>所有專案</div>
     <div class="nav-item" id="nav-alerts" onclick="BIM.showPage('alerts')"><span>⚑</span>警示追蹤</div>
+    <div class="nav-item" id="nav-members" onclick="BIM.showPage('members')"><span>👤</span>員工管理</div>
     <div class="nav-section">操作</div>
     <div class="nav-item" onclick="BIM.openAddModal()"><span>＋</span>新增專案</div>
   </div>
 
   <div class="main">
+    <!-- Dashboard -->
     <div class="page active" id="page-dashboard">
       <div class="page-header">
         <div><div class="page-title">儀表板</div><div class="page-sub" id="today-date"></div></div>
@@ -164,13 +176,14 @@
       </div>
     </div>
 
+    <!-- Projects -->
     <div class="page" id="page-projects">
       <div class="page-header">
         <div><div class="page-title">所有專案</div></div>
         <button class="btn btn-primary btn-sm" onclick="BIM.openAddModal()">＋ 新增專案</button>
       </div>
       <div class="search-bar">
-        <input type="text" placeholder="搜尋專案名稱、主辦..." id="search-input" oninput="BIM.renderProjects()">
+        <input type="text" placeholder="搜尋專案名稱..." id="search-input" oninput="BIM.renderProjects()">
         <div class="filter-pills">
           <div class="filter-pill active" onclick="BIM.setFilter('all',this)">全部</div>
           <div class="filter-pill" onclick="BIM.setFilter('施工',this)">施工中</div>
@@ -185,14 +198,24 @@
       </div>
     </div>
 
+    <!-- Alerts -->
     <div class="page" id="page-alerts">
       <div class="page-header"><div><div class="page-title">警示追蹤</div><div class="page-sub">依緊急程度排列</div></div></div>
       <div class="alert-list" id="all-alerts"><div class="empty">載入中...</div></div>
     </div>
+
+    <!-- Members -->
+    <div class="page" id="page-members">
+      <div class="page-header">
+        <div><div class="page-title">員工管理</div><div class="page-sub">管理專案主辦與機電主辦人員</div></div>
+        <button class="btn btn-primary btn-sm" onclick="BIM.openAddMemberModal()">＋ 新增員工</button>
+      </div>
+      <div class="member-grid" id="member-grid"><div class="empty" style="grid-column:1/-1">載入中...</div></div>
+    </div>
   </div>
 </div>
 
-<!-- Detail Modal -->
+<!-- Project Detail Modal -->
 <div class="modal-overlay" id="detail-modal" onclick="if(event.target===this)BIM.closeModal('detail-modal')">
   <div class="modal">
     <div class="modal-header">
@@ -203,7 +226,7 @@
   </div>
 </div>
 
-<!-- Add/Edit Modal -->
+<!-- Add/Edit Project Modal -->
 <div class="modal-overlay" id="add-modal" onclick="if(event.target===this)BIM.closeModal('add-modal')">
   <div class="modal">
     <div class="modal-header">
@@ -214,8 +237,8 @@
       <div class="form-grid">
         <div class="form-group"><label>專案名稱 *</label><input id="f-name" placeholder="例：明新、大華"></div>
         <div class="form-group"><label>合約範圍</label><input id="f-contract" placeholder="例：全系統竣工"></div>
-        <div class="form-group"><label>專案主辦</label><input id="f-owner" placeholder="例：柏仰"></div>
-        <div class="form-group"><label>機電主辦</label><input id="f-mep" placeholder="例：昱安"></div>
+        <div class="form-group"><label>專案主辦</label><select id="f-owner"><option value="">— 請選擇 —</option></select></div>
+        <div class="form-group"><label>機電主辦</label><select id="f-mep"><option value="">— 請選擇 —</option></select></div>
         <div class="form-group"><label>目前階段</label>
           <select id="f-stage"><option>基設(不分階)</option><option>細設一階</option><option>細設二階</option><option>細設三階</option><option>細設(不分階)</option><option>施工階段</option><option>竣工階段</option><option>金質獎</option></select>
         </div>
@@ -234,10 +257,10 @@
         </div>
         <div class="form-group full"><label>圖資狀況說明</label><input id="f-doc-note" placeholder="例：9/30取得細設三階全部圖說"></div>
         <div class="form-group full"><label>模型現況</label><input id="f-model" placeholder="例：全棟全系統已建置"></div>
-        <div class="form-group full"><label>作業內容範圍</label><textarea id="f-task-scope" placeholder="例：全棟建築、結構、機電"></textarea></div>
-        <div class="form-group full"><label>已完成事項</label><textarea id="f-task-done" placeholder="例：7F已調整完畢"></textarea></div>
-        <div class="form-group full"><label>未完成事項</label><textarea id="f-task-todo" placeholder="例：其他樓層各系統待處理"></textarea></div>
-        <div class="form-group full"><label>專案備註</label><textarea id="f-note" placeholder="例：現場停工，等待設計核定"></textarea></div>
+        <div class="form-group full"><label>作業內容範圍</label><textarea id="f-task-scope"></textarea></div>
+        <div class="form-group full"><label>已完成事項</label><textarea id="f-task-done"></textarea></div>
+        <div class="form-group full"><label>未完成事項</label><textarea id="f-task-todo"></textarea></div>
+        <div class="form-group full"><label>專案備註</label><textarea id="f-note"></textarea></div>
       </div>
       <div class="form-actions">
         <button class="btn" onclick="BIM.closeModal('add-modal')">取消</button>
@@ -247,9 +270,31 @@
   </div>
 </div>
 
+<!-- Add/Edit Member Modal -->
+<div class="modal-overlay" id="member-modal" onclick="if(event.target===this)BIM.closeModal('member-modal')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div><div class="modal-title" id="member-modal-title">新增員工</div></div>
+      <button class="modal-close" onclick="BIM.closeModal('member-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-group"><label>姓名 *</label><input id="m-name" placeholder="例：昱安"></div>
+        <div class="form-group"><label>職稱</label>
+          <select id="m-role"><option>專案主辦</option><option>機電主辦</option><option>專案主辦/機電主辦</option><option>委外</option></select>
+        </div>
+        <div class="form-group"><label>備註</label><input id="m-note" placeholder="選填"></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn" onclick="BIM.closeModal('member-modal')">取消</button>
+        <button class="btn btn-primary" id="member-save-btn" onclick="BIM.saveMember()">儲存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<!-- Firebase (non-module, using compat SDK so window.BIM works everywhere) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
@@ -262,32 +307,36 @@ firebase.initializeApp({
   appId:"1:957769782377:web:492f69c36f0247006efef8"
 });
 const db = firebase.firestore();
-const colRef = db.collection("projects");
 
 const SYS = ['電','消','給','汙','空'];
-let projects = [], editingId = null, stageFilter = 'all';
-let sysState = {電:'missing',消:'missing',給:'missing',汙:'missing',空:'missing'};
+let projects=[], members=[], editingProjId=null, editingMemberId=null, stageFilter='all';
+let sysState={電:'missing',消:'missing',給:'missing',汙:'missing',空:'missing'};
 
-// ── Sync status ───────────────────────────────────────
 function setSyncStatus(s){
-  document.getElementById('sync-dot').className = 'sync-dot '+s;
-  document.getElementById('sync-label').textContent = s==='live'?'即時同步中':s==='syncing'?'同步中...':'連線失敗';
+  document.getElementById('sync-dot').className='sync-dot '+s;
+  document.getElementById('sync-label').textContent=s==='live'?'即時同步中':s==='syncing'?'同步中...':'連線失敗';
 }
 setSyncStatus('syncing');
 
-// ── Realtime listener ─────────────────────────────────
-colRef.onSnapshot(snap=>{
-  projects = snap.docs.map(d=>({id:d.id,...d.data()}));
+// Realtime listeners
+db.collection('members').orderBy('name').onSnapshot(snap=>{
+  members=snap.docs.map(d=>({id:d.id,...d.data()}));
+  populateMemberDropdowns();
+  renderMembers();
+});
+db.collection('projects').onSnapshot(snap=>{
+  projects=snap.docs.map(d=>({id:d.id,...d.data()}));
   setSyncStatus('live');
   renderAll();
-}, e=>{ setSyncStatus('error'); console.error(e); });
+},e=>setSyncStatus('error'));
 
 // ── Helpers ───────────────────────────────────────────
+function getMemberName(id){ const m=members.find(x=>x.id===id); return m?m.name:'—'; }
 function parseDate(s){if(!s)return null;const[y,m,d]=s.split('-');return new Date(y,m-1,d);}
 function daysUntil(s){if(!s)return null;const d=parseDate(s);return d?Math.round((d-new Date())/86400000):null;}
 function formatDate(s){if(!s)return'—';const d=parseDate(s);return`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;}
 function alertLevel(p){
-  const days=daysUntil(p.deadline), miss=SYS.filter(k=>p.systems?.[k]==='missing').length;
+  const days=daysUntil(p.deadline),miss=SYS.filter(k=>p.systems?.[k]==='missing').length;
   if(days!==null&&days<0)return'urgent';
   if(days!==null&&days<=7)return'urgent';
   if(miss>=4&&(p.stage||'').includes('施工'))return'urgent';
@@ -296,7 +345,7 @@ function alertLevel(p){
   return'ok';
 }
 function alertMsg(p){
-  const days=daysUntil(p.deadline), miss=SYS.filter(k=>p.systems?.[k]==='missing').length, msgs=[];
+  const days=daysUntil(p.deadline),miss=SYS.filter(k=>p.systems?.[k]==='missing').length,msgs=[];
   if(days!==null&&days<0)msgs.push('截止日已逾期'+Math.abs(days)+'天');
   else if(days!==null&&days<=21)msgs.push('截止日剩'+days+'天');
   if(miss>0)msgs.push(miss+'個系統圖資未取得');
@@ -306,15 +355,29 @@ function alertMsg(p){
 function sysDots(sys){return SYS.map(k=>{const s=sys?.[k]||'missing';return`<div class="sys-dot ${s}" title="${k}：${s==='got'?'已取得':s==='partial'?'部分取得':'未取得'}">${s==='got'?'✓':s==='partial'?'△':'✕'}</div>`;}).join('');}
 function statusBadge(p){const lv=alertLevel(p);return lv==='urgent'?'<span class="badge badge-red">緊急</span>':lv==='warn'?'<span class="badge badge-amber">注意</span>':'<span class="badge badge-green">正常</span>';}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function avatarColor(name){const colors=['#e6f1fb','#eaf3de','#faeeda','#fcebeb','#f0efe9'];return colors[name.charCodeAt(0)%colors.length];}
+function avatarText(name){const colors2=['#185fa5','#3b6d11','#854f0b','#a32d2d','#5a5a54'];return colors2[name.charCodeAt(0)%colors2.length];}
+
+function populateMemberDropdowns(){
+  ['f-owner','f-mep'].forEach(id=>{
+    const sel=document.getElementById(id);
+    const cur=sel.value;
+    sel.innerHTML='<option value="">— 請選擇 —</option>';
+    members.forEach(m=>{ const opt=document.createElement('option');opt.value=m.id;opt.textContent=m.name+(m.role?' ('+m.role+')':'');sel.appendChild(opt); });
+    sel.value=cur;
+  });
+}
 
 // ── Render ────────────────────────────────────────────
 function renderAll(){renderStats();renderDashAlerts();renderDashTable();renderProjects();renderAllAlerts();}
+
 function renderStats(){
   document.getElementById('stat-total').textContent=projects.length;
   document.getElementById('stat-urgent').textContent=projects.filter(p=>alertLevel(p)==='urgent').length;
   document.getElementById('stat-nodoc').textContent=projects.filter(p=>SYS.some(k=>p.systems?.[k]==='missing')).length;
   document.getElementById('stat-month').textContent=projects.filter(p=>{const d=daysUntil(p.deadline);return d!==null&&d>=0&&d<=30;}).length;
 }
+
 function alertRowHTML(p){
   const lv=alertLevel(p),days=daysUntil(p.deadline);
   const dt=days!==null?(days<0?`<span class="days-tag red">逾期${Math.abs(days)}天</span>`:`<span class="days-tag ${lv==='urgent'?'red':'amber'}">剩${days}天</span>`):'';
@@ -323,31 +386,68 @@ function alertRowHTML(p){
     <div class="alert-info"><div class="alert-name">${p.name}&nbsp;<span style="font-size:12px;font-weight:400;color:var(--text2)">${p.stage||''}</span></div><div class="alert-sub">${alertMsg(p)}</div></div>
     ${dt}</div>`;
 }
+
 function renderDashAlerts(){
   const list=projects.filter(p=>alertLevel(p)!=='ok').sort((a,b)=>({urgent:0,warn:1,ok:2}[alertLevel(a)]-{urgent:0,warn:1,ok:2}[alertLevel(b)]));
   document.getElementById('dash-alerts').innerHTML=list.length?list.map(alertRowHTML).join(''):'<div class="empty">目前沒有警示 🎉</div>';
 }
+
 function renderDashTable(){
   const list=[...projects].sort((a,b)=>({urgent:0,warn:1,ok:2}[alertLevel(a)]-{urgent:0,warn:1,ok:2}[alertLevel(b)]));
-  document.getElementById('dash-proj-body').innerHTML=list.map(p=>`<tr onclick="BIM.openDetail('${p.id}')"><td><strong>${p.name}</strong></td><td>${p.mep||'—'}</td><td><span class="stage-tag">${p.stage||'—'}</span></td><td>${formatDate(p.deadline)}</td><td><div class="systems">${sysDots(p.systems)}</div></td><td>${statusBadge(p)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">尚無專案</td></tr>';
+  document.getElementById('dash-proj-body').innerHTML=list.map(p=>`<tr onclick="BIM.openDetail('${p.id}')">
+    <td><strong>${p.name}</strong></td>
+    <td>${getMemberName(p.mepId)||p.mep||'—'}</td>
+    <td><span class="stage-tag">${p.stage||'—'}</span></td>
+    <td>${formatDate(p.deadline)}</td>
+    <td><div class="systems">${sysDots(p.systems)}</div></td>
+    <td>${statusBadge(p)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">尚無專案</td></tr>';
 }
+
 function renderProjects(){
   const q=(document.getElementById('search-input')?.value||'').toLowerCase();
-  const list=projects.filter(p=>(p.name+p.owner+p.mep).toLowerCase().includes(q)&&(stageFilter==='all'||(p.stage||'').includes(stageFilter)));
+  const list=projects.filter(p=>{
+    const ownerName=getMemberName(p.ownerId)||p.owner||'';
+    const mepName=getMemberName(p.mepId)||p.mep||'';
+    return(p.name+ownerName+mepName).toLowerCase().includes(q)&&(stageFilter==='all'||(p.stage||'').includes(stageFilter));
+  });
   document.getElementById('proj-body').innerHTML=list.map(p=>`<tr onclick="BIM.openDetail('${p.id}')">
     <td><strong>${p.name}</strong>${p.contract?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${p.contract}</div>`:''}</td>
-    <td>${p.owner||'—'}</td><td>${p.mep||'—'}</td><td><span class="stage-tag">${p.stage||'—'}</span></td>
-    <td>${formatDate(p.deadline)}</td><td style="font-size:12px;color:var(--text2)">${p.floor||'—'}</td>
+    <td>${getMemberName(p.ownerId)||p.owner||'—'}</td>
+    <td>${getMemberName(p.mepId)||p.mep||'—'}</td>
+    <td><span class="stage-tag">${p.stage||'—'}</span></td>
+    <td>${formatDate(p.deadline)}</td>
+    <td style="font-size:12px;color:var(--text2)">${p.floor||'—'}</td>
     <td><div class="systems">${sysDots(p.systems)}</div></td>
     <td style="font-size:12px;color:var(--text2);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.model||'—'}</td>
     <td>${statusBadge(p)}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">找不到符合的專案</td></tr>';
 }
+
 function renderAllAlerts(){
   const list=projects.filter(p=>alertLevel(p)!=='ok').sort((a,b)=>({urgent:0,warn:1}[alertLevel(a)]-{urgent:0,warn:1}[alertLevel(b)]));
   document.getElementById('all-alerts').innerHTML=list.length?list.map(alertRowHTML).join(''):'<div class="empty">目前沒有警示 🎉</div>';
 }
 
-// ── BIM namespace (accessible from onclick) ───────────
+function renderMembers(){
+  const grid=document.getElementById('member-grid');
+  if(!members.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">尚無員工資料</div>';return;}
+  grid.innerHTML=members.map(m=>{
+    const projCount=projects.filter(p=>p.ownerId===m.id||p.mepId===m.id).length;
+    const bg=avatarColor(m.name),tc=avatarText(m.name);
+    return`<div class="member-card">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="member-avatar" style="background:${bg};color:${tc}">${m.name.slice(0,1)}</div>
+        <div><div class="member-name">${m.name}</div><div class="member-role">${m.role||''}</div></div>
+      </div>
+      <div class="member-proj-count">負責專案：${projCount} 個</div>
+      <div class="member-actions">
+        <button class="btn btn-sm" onclick="BIM.openEditMemberModal('${m.id}')">✏️ 編輯</button>
+        <button class="btn btn-sm" style="color:var(--red);border-color:var(--red-border)" onclick="BIM.confirmDeleteMember('${m.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── BIM namespace ─────────────────────────────────────
 window.BIM = {
   showPage(name){
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -361,11 +461,20 @@ window.BIM = {
     el.classList.add('active');
     renderProjects();
   },
-  closeModal(id){ document.getElementById(id)?.classList.remove('open'); },
+  closeModal(id){document.getElementById(id)?.classList.remove('open');},
+  toggleSys(key){
+    const order=['missing','partial','got'];
+    sysState[key]=order[(order.indexOf(sysState[key])+1)%3];
+    const el=document.getElementById('sc-'+key),st=sysState[key];
+    el.className='sys-check'+(st==='got'?' checked':st==='partial'?' partial-check':'');
+    el.textContent=key+(st==='got'?' ✓':st==='partial'?' △':'');
+  },
   openAddModal(){
-    editingId=null;
+    editingProjId=null;
     document.getElementById('add-modal-title').textContent='新增專案';
-    ['name','contract','owner','mep','floor','deadline','final','doc-note','model','task-scope','task-done','task-todo','note'].forEach(k=>{const el=document.getElementById('f-'+k);if(el)el.value='';});
+    ['name','contract','floor','deadline','final','doc-note','model','task-scope','task-done','task-todo','note'].forEach(k=>{const el=document.getElementById('f-'+k);if(el)el.value='';});
+    document.getElementById('f-owner').value='';
+    document.getElementById('f-mep').value='';
     document.getElementById('f-stage').value='施工階段';
     sysState={電:'missing',消:'missing',給:'missing',汙:'missing',空:'missing'};
     SYS.forEach(k=>{const el=document.getElementById('sc-'+k);el.className='sys-check';el.textContent=k;});
@@ -374,12 +483,12 @@ window.BIM = {
   },
   openEditModal(id){
     const p=projects.find(x=>x.id===id);if(!p)return;
-    editingId=id;
+    editingProjId=id;
     document.getElementById('add-modal-title').textContent='編輯專案：'+p.name;
     document.getElementById('f-name').value=p.name||'';
     document.getElementById('f-contract').value=p.contract||'';
-    document.getElementById('f-owner').value=p.owner||'';
-    document.getElementById('f-mep').value=p.mep||'';
+    document.getElementById('f-owner').value=p.ownerId||'';
+    document.getElementById('f-mep').value=p.mepId||'';
     document.getElementById('f-stage').value=p.stage||'施工階段';
     document.getElementById('f-floor').value=p.floor||'';
     document.getElementById('f-deadline').value=p.deadline||'';
@@ -399,10 +508,30 @@ window.BIM = {
     const name=document.getElementById('f-name').value.trim();
     if(!name){alert('請填寫專案名稱');return;}
     const btn=document.getElementById('save-btn');btn.textContent='儲存中...';btn.disabled=true;
-    const data={name,contract:document.getElementById('f-contract').value,owner:document.getElementById('f-owner').value,mep:document.getElementById('f-mep').value,stage:document.getElementById('f-stage').value,floor:document.getElementById('f-floor').value,deadline:document.getElementById('f-deadline').value,final:document.getElementById('f-final').value,systems:{...sysState},docNote:document.getElementById('f-doc-note').value,model:document.getElementById('f-model').value,scope:document.getElementById('f-task-scope').value,done:document.getElementById('f-task-done').value,todo:document.getElementById('f-task-todo').value,note:document.getElementById('f-note').value,updatedAt:new Date().toISOString()};
+    const ownerId=document.getElementById('f-owner').value;
+    const mepId=document.getElementById('f-mep').value;
+    const ownerM=members.find(x=>x.id===ownerId);
+    const mepM=members.find(x=>x.id===mepId);
+    const data={
+      name,contract:document.getElementById('f-contract').value,
+      ownerId,owner:ownerM?ownerM.name:'',
+      mepId,mep:mepM?mepM.name:'',
+      stage:document.getElementById('f-stage').value,
+      floor:document.getElementById('f-floor').value,
+      deadline:document.getElementById('f-deadline').value,
+      final:document.getElementById('f-final').value,
+      systems:{...sysState},
+      docNote:document.getElementById('f-doc-note').value,
+      model:document.getElementById('f-model').value,
+      scope:document.getElementById('f-task-scope').value,
+      done:document.getElementById('f-task-done').value,
+      todo:document.getElementById('f-task-todo').value,
+      note:document.getElementById('f-note').value,
+      updatedAt:new Date().toISOString()
+    };
     try{
-      if(editingId){await colRef.doc(editingId).update(data);showToast('已更新專案');}
-      else{await colRef.add(data);showToast('已新增專案');}
+      if(editingProjId){await db.collection('projects').doc(editingProjId).update(data);showToast('已更新專案');}
+      else{await db.collection('projects').add(data);showToast('已新增專案');}
       this.closeModal('add-modal');
     }catch(e){alert('儲存失敗：'+e.message);}
     btn.textContent='儲存';btn.disabled=false;
@@ -410,27 +539,22 @@ window.BIM = {
   async confirmDelete(id){
     const p=projects.find(x=>x.id===id);if(!p)return;
     if(!confirm('確定要刪除「'+p.name+'」嗎？'))return;
-    try{await colRef.doc(id).delete();this.closeModal('detail-modal');showToast('已刪除專案');}
+    try{await db.collection('projects').doc(id).delete();this.closeModal('detail-modal');showToast('已刪除專案');}
     catch(e){alert('刪除失敗：'+e.message);}
-  },
-  toggleSys(key){
-    const order=['missing','partial','got'];
-    sysState[key]=order[(order.indexOf(sysState[key])+1)%3];
-    const el=document.getElementById('sc-'+key),st=sysState[key];
-    el.className='sys-check'+(st==='got'?' checked':st==='partial'?' partial-check':'');
-    el.textContent=key+(st==='got'?' ✓':st==='partial'?' △':'');
   },
   openDetail(id){
     const p=projects.find(x=>x.id===id);if(!p)return;
+    const ownerName=getMemberName(p.ownerId)||p.owner||'—';
+    const mepName=getMemberName(p.mepId)||p.mep||'—';
     document.getElementById('detail-title').textContent=p.name;
-    document.getElementById('detail-sub').textContent=(p.contract||'')+' ｜ 專案主辦：'+(p.owner||'—')+' ｜ 機電主辦：'+(p.mep||'—');
+    document.getElementById('detail-sub').textContent=(p.contract||'')+' ｜ 專案主辦：'+ownerName+' ｜ 機電主辦：'+mepName;
     const days=daysUntil(p.deadline);
     const dc=days!==null&&days<=7?'var(--red)':days!==null&&days<=21?'var(--amber)':'var(--text)';
     const pills=SYS.map(k=>{const s=p.systems?.[k]||'missing';return`<div class="sys-pill ${s}">${k} ${s==='got'?'已取得':s==='partial'?'部分取得':'未取得'}</div>`;}).join('');
     document.getElementById('detail-body').innerHTML=`
       <div class="proj-meta-grid">
         <div class="meta-item"><label>目前階段</label><span>${p.stage||'—'}</span></div>
-        <div class="meta-item"><label>截止日期</label><span style="color:${dc}">${formatDate(p.deadline)}${days!==null?' ('+( days<0?'逾期'+Math.abs(days)+'天':'剩'+days+'天')+')':''}</span></div>
+        <div class="meta-item"><label>截止日期</label><span style="color:${dc}">${formatDate(p.deadline)}${days!==null?' ('+(days<0?'逾期'+Math.abs(days)+'天':'剩'+days+'天')+')':''}</span></div>
         <div class="meta-item"><label>最後完工日</label><span>${formatDate(p.final)}</span></div>
         <div class="meta-item"><label>目前施工樓層</label><span>${p.floor||'—'}</span></div>
         <div class="meta-item"><label>模型現況</label><span>${p.model||'—'}</span></div>
@@ -449,10 +573,49 @@ window.BIM = {
         <button class="btn btn-sm" style="color:var(--red);border-color:var(--red-border)" onclick="BIM.confirmDelete('`+id+`')">🗑 刪除</button>
       </div>`;
     document.getElementById('detail-modal').classList.add('open');
-  }
+  },
+  // Member CRUD
+  openAddMemberModal(){
+    editingMemberId=null;
+    document.getElementById('member-modal-title').textContent='新增員工';
+    document.getElementById('m-name').value='';
+    document.getElementById('m-role').value='專案主辦';
+    document.getElementById('m-note').value='';
+    document.getElementById('member-modal').classList.add('open');
+  },
+  openEditMemberModal(id){
+    const m=members.find(x=>x.id===id);if(!m)return;
+    editingMemberId=id;
+    document.getElementById('member-modal-title').textContent='編輯員工：'+m.name;
+    document.getElementById('m-name').value=m.name||'';
+    document.getElementById('m-role').value=m.role||'專案主辦';
+    document.getElementById('m-note').value=m.note||'';
+    document.getElementById('member-modal').classList.add('open');
+  },
+  async saveMember(){
+    const name=document.getElementById('m-name').value.trim();
+    if(!name){alert('請填寫姓名');return;}
+    const btn=document.getElementById('member-save-btn');btn.textContent='儲存中...';btn.disabled=true;
+    const data={name,role:document.getElementById('m-role').value,note:document.getElementById('m-note').value,updatedAt:new Date().toISOString()};
+    try{
+      if(editingMemberId){await db.collection('members').doc(editingMemberId).update(data);showToast('已更新員工資料');}
+      else{await db.collection('members').add(data);showToast('已新增員工');}
+      this.closeModal('member-modal');
+    }catch(e){alert('儲存失敗：'+e.message);}
+    btn.textContent='儲存';btn.disabled=false;
+  },
+  async confirmDeleteMember(id){
+    const m=members.find(x=>x.id===id);if(!m)return;
+    const used=projects.filter(p=>p.ownerId===id||p.mepId===id).length;
+    if(used>0&&!confirm(`「${m.name}」目前負責 ${used} 個專案，確定還是要刪除嗎？`))return;
+    else if(used===0&&!confirm(`確定要刪除「${m.name}」嗎？`))return;
+    try{await db.collection('members').doc(id).delete();showToast('已刪除員工');}
+    catch(e){alert('刪除失敗：'+e.message);}
+  },
+  renderProjects
 };
 
-document.getElementById('today-date').textContent = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+document.getElementById('today-date').textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
 </script>
 </body>
 </html>
