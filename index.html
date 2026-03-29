@@ -5,135 +5,119 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BIM 機電專案管控系統</title>
 <style>
-  :root{--bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--border:#e0ddd4;--border2:#ccc9be;--text:#1a1a18;--text2:#5a5a54;--text3:#8a8a82;--red:#a32d2d;--red-bg:#fcebeb;--red-border:#f7c1c1;--amber:#854f0b;--amber-bg:#faeeda;--amber-border:#fac775;--green:#3b6d11;--green-bg:#eaf3de;--green-border:#c0dd97;--radius:10px;--radius-sm:6px;}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
-  .app{display:flex;min-height:100vh;}
-  .sidebar{width:200px;background:var(--surface);border-right:1px solid var(--border);padding:20px 0;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;}
-  .main{margin-left:200px;flex:1;padding:24px;max-width:1200px;}
-  @media(max-width:768px){
-    .sidebar{width:100%;height:auto;position:relative;border-right:none;border-bottom:1px solid var(--border);padding:6px 0;display:flex;flex-wrap:wrap;align-items:center;}
-    .logo{padding:6px 12px;border-bottom:none;margin-bottom:0;border-right:1px solid var(--border);}
-    .nav-item{padding:7px 9px;font-size:12px;}
-    .nav-section{display:none;}
-    .main{margin-left:0;padding:14px;}
-    .app{flex-direction:column;}
-    .stat-grid{grid-template-columns:repeat(2,1fr)!important;}
-    .proj-meta-grid{grid-template-columns:1fr 1fr!important;}
-    .form-grid{grid-template-columns:1fr!important;}
-    .member-grid{grid-template-columns:repeat(2,1fr)!important;}
-  }
-  .logo{padding:0 20px 14px;border-bottom:1px solid var(--border);margin-bottom:10px;}
-  .logo-title{font-size:15px;font-weight:600;}
-  .logo-sub{font-size:10px;color:var(--text3);margin-top:6px;display:flex;align-items:center;gap:5px;}
-  .sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0;display:inline-block;}
-  .sync-dot.live{background:#639922;}
-  .sync-dot.syncing{background:#EF9F27;animation:pulse 1s infinite;}
-  .sync-dot.error{background:var(--red);}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-  .nav-item{display:flex;align-items:center;gap:8px;padding:9px 20px;cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;}
-  .nav-item:hover{background:var(--bg);color:var(--text);}
-  .nav-item.active{background:var(--bg);color:var(--text);font-weight:500;border-left:3px solid var(--text);padding-left:17px;}
-  .nav-section{font-size:10px;color:var(--text3);padding:12px 20px 4px;letter-spacing:.08em;}
-  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
-  .page-title{font-size:20px;font-weight:600;}
-  .page-sub{font-size:13px;color:var(--text3);margin-top:2px;}
-  .btn{padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit;}
-  .btn:hover{background:var(--bg);}
-  .btn-primary{background:var(--text);color:#fff;border-color:var(--text);}
-  .btn-primary:hover{background:#333;}
-  .btn-sm{padding:5px 10px;font-size:12px;}
-  .btn:disabled{opacity:.5;cursor:not-allowed;}
-  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
-  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
-  .stat-label{font-size:12px;color:var(--text3);margin-bottom:6px;}
-  .stat-val{font-size:26px;font-weight:600;}
-  .stat-val.red{color:var(--red);}
-  .stat-val.amber{color:var(--amber);}
-  .stat-hint{font-size:11px;color:var(--text3);margin-top:4px;}
-  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-  .section-title{font-size:13px;font-weight:500;color:var(--text2);letter-spacing:.04em;}
-  .alert-list{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;}
-  .alert-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s;}
-  .alert-row:hover{border-color:var(--border2);}
-  .alert-row.urgent{border-left:3px solid var(--red);}
-  .alert-row.warn{border-left:3px solid #EF9F27;}
-  .badge{font-size:11px;font-weight:500;border-radius:4px;padding:3px 8px;white-space:nowrap;flex-shrink:0;}
-  .badge-red{background:var(--red-bg);color:var(--red);}
-  .badge-amber{background:var(--amber-bg);color:var(--amber);}
-  .badge-green{background:var(--green-bg);color:var(--green);}
-  .badge-gray{background:var(--surface2);color:var(--text2);}
-  .alert-info{flex:1;min-width:0;}
-  .alert-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .alert-sub{font-size:12px;color:var(--text2);margin-top:2px;}
-  .days-tag{font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;}
-  .days-tag.red{color:var(--red);}
-  .days-tag.amber{color:var(--amber);}
-  .proj-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:28px;}
-  .table-scroll{overflow-x:auto;}
-  .proj-table{width:100%;border-collapse:collapse;}
-  .proj-table th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:12px;font-weight:500;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;}
-  .proj-table td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
-  .proj-table tr:last-child td{border-bottom:none;}
-  .proj-table tr:hover td{background:var(--bg);}
-  .proj-table tr{cursor:pointer;}
-  .systems{display:flex;gap:4px;}
-  .sys-dot{width:22px;height:22px;border-radius:4px;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;}
-  .sys-dot.got{background:var(--green-bg);color:var(--green);}
-  .sys-dot.partial{background:var(--amber-bg);color:var(--amber);}
-  .sys-dot.missing{background:var(--red-bg);color:var(--red);}
-  .stage-tag{font-size:11px;padding:3px 7px;border-radius:4px;border:1px solid var(--border);color:var(--text2);white-space:nowrap;}
-  .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px;}
-  .modal-overlay.open{display:flex;}
-  .modal{background:var(--surface);border-radius:14px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;}
-  .modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;}
-  .modal-title{font-size:18px;font-weight:600;}
-  .modal-sub{font-size:12px;color:var(--text3);margin-top:4px;}
-  .modal-close{font-size:20px;cursor:pointer;color:var(--text3);padding:4px;line-height:1;background:none;border:none;font-family:inherit;}
-  .modal-body{padding:20px 24px;}
-  .proj-meta-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
-  .meta-item label{font-size:11px;color:var(--text3);display:block;margin-bottom:4px;}
-  .meta-item span{font-size:14px;font-weight:500;}
-  .divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
-  .field-label{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:8px;}
-  .sys-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
-  .sys-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid;}
-  .sys-pill.got{background:var(--green-bg);color:var(--green);border-color:var(--green-border);}
-  .sys-pill.partial{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border);}
-  .sys-pill.missing{background:var(--red-bg);color:var(--red);border-color:var(--red-border);}
-  .task-box{background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;font-size:13px;color:var(--text2);line-height:1.6;}
-  .note-box{background:#fffbf0;border:1px solid var(--amber-border);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--amber);}
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-  .form-group{display:flex;flex-direction:column;gap:6px;}
-  .form-group.full{grid-column:1/-1;}
-  .form-group label{font-size:12px;color:var(--text2);font-weight:500;}
-  .form-group input,.form-group select,.form-group textarea{padding:8px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;}
-  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#888;}
-  .form-group textarea{resize:vertical;min-height:70px;}
-  .sys-check-row{display:flex;gap:8px;flex-wrap:wrap;}
-  .sys-check{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;font-size:13px;transition:all .15s;user-select:none;}
-  .sys-check.checked{background:var(--green-bg);color:var(--green);border-color:var(--green-border);}
-  .sys-check.partial-check{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border);}
-  .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
-  .empty{text-align:center;padding:40px;color:var(--text3);font-size:14px;}
-  .loading-cell{text-align:center;padding:30px;color:var(--text3);}
-  .page{display:none;}
-  .page.active{display:block;}
-  .search-bar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
-  .search-bar input{flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;outline:none;background:var(--surface);font-family:inherit;}
-  .filter-pills{display:flex;gap:6px;flex-wrap:wrap;}
-  .filter-pill{padding:4px 10px;border-radius:20px;border:1px solid var(--border2);font-size:12px;cursor:pointer;color:var(--text2);transition:all .15s;}
-  .filter-pill.active{background:var(--text);color:#fff;border-color:var(--text);}
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
-  .toast.show{opacity:1;}
-  /* Member page */
-  .member-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
-  .member-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:10px;}
-  .member-avatar{width:44px;height:44px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:var(--text2);flex-shrink:0;}
-  .member-name{font-size:15px;font-weight:600;}
-  .member-role{font-size:12px;color:var(--text3);}
-  .member-proj-count{font-size:12px;color:var(--text2);}
-  .member-actions{display:flex;gap:6px;margin-top:4px;}
+:root{--bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--border:#e0ddd4;--border2:#ccc9be;--text:#1a1a18;--text2:#5a5a54;--text3:#8a8a82;--red:#a32d2d;--red-bg:#fcebeb;--red-border:#f7c1c1;--amber:#854f0b;--amber-bg:#faeeda;--amber-border:#fac775;--green:#3b6d11;--green-bg:#eaf3de;--green-border:#c0dd97;--blue:#185fa5;--blue-bg:#e6f1fb;--blue-border:#b5d4f4;--radius:10px;--radius-sm:6px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+.app{display:flex;min-height:100vh;}
+.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);padding:20px 0;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;}
+.main{margin-left:210px;flex:1;padding:24px;max-width:1300px;}
+@media(max-width:768px){
+  .sidebar{width:100%;height:auto;position:relative;border-right:none;border-bottom:1px solid var(--border);padding:6px 0;display:flex;flex-wrap:wrap;}
+  .logo{padding:6px 12px;border-bottom:none;border-right:1px solid var(--border);margin-bottom:0;}
+  .nav-item{padding:7px 9px;font-size:12px;}
+  .nav-section{display:none;}
+  .main{margin-left:0;padding:14px;}
+  .app{flex-direction:column;}
+  .stat-grid{grid-template-columns:repeat(2,1fr)!important;}
+  .form-grid{grid-template-columns:1fr!important;}
+  .card-grid{grid-template-columns:repeat(2,1fr)!important;}
+  .proj-meta-grid{grid-template-columns:1fr 1fr!important;}
+}
+.logo{padding:0 20px 14px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+.logo-title{font-size:15px;font-weight:600;}
+.logo-sub{font-size:10px;color:var(--text3);margin-top:6px;display:flex;align-items:center;gap:5px;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0;}
+.sync-dot.live{background:#639922;} .sync-dot.syncing{background:#EF9F27;animation:pulse 1s infinite;} .sync-dot.error{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.nav-item{display:flex;align-items:center;gap:8px;padding:9px 20px;cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;}
+.nav-item:hover{background:var(--bg);color:var(--text);}
+.nav-item.active{background:var(--bg);color:var(--text);font-weight:500;border-left:3px solid var(--text);padding-left:17px;}
+.nav-section{font-size:10px;color:var(--text3);padding:12px 20px 4px;letter-spacing:.08em;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.page-title{font-size:20px;font-weight:600;}
+.page-sub{font-size:13px;color:var(--text3);margin-top:2px;}
+.btn{padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit;}
+.btn:hover{background:var(--bg);} .btn-primary{background:var(--text);color:#fff;border-color:var(--text);} .btn-primary:hover{background:#333;} .btn-sm{padding:5px 10px;font-size:12px;} .btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-danger{color:var(--red);border-color:var(--red-border);}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.stat-label{font-size:12px;color:var(--text3);margin-bottom:6px;} .stat-val{font-size:26px;font-weight:600;} .stat-val.red{color:var(--red);} .stat-val.amber{color:var(--amber);} .stat-hint{font-size:11px;color:var(--text3);margin-top:4px;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.section-title{font-size:13px;font-weight:500;color:var(--text2);letter-spacing:.04em;}
+.alert-list{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;}
+.alert-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s;}
+.alert-row:hover{border-color:var(--border2);} .alert-row.urgent{border-left:3px solid var(--red);} .alert-row.warn{border-left:3px solid #EF9F27;}
+.badge{font-size:11px;font-weight:500;border-radius:4px;padding:3px 8px;white-space:nowrap;flex-shrink:0;}
+.badge-red{background:var(--red-bg);color:var(--red);} .badge-amber{background:var(--amber-bg);color:var(--amber);} .badge-green{background:var(--green-bg);color:var(--green);} .badge-blue{background:var(--blue-bg);color:var(--blue);} .badge-gray{background:var(--surface2);color:var(--text2);}
+.alert-info{flex:1;min-width:0;} .alert-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .alert-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.days-tag{font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;} .days-tag.red{color:var(--red);} .days-tag.amber{color:var(--amber);}
+.proj-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:28px;}
+.table-scroll{overflow-x:auto;}
+.proj-table{width:100%;border-collapse:collapse;}
+.proj-table th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:12px;font-weight:500;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;}
+.proj-table td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.proj-table tr:last-child td{border-bottom:none;} .proj-table tr:hover td{background:var(--bg);} .proj-table tr{cursor:pointer;}
+.systems{display:flex;gap:4px;}
+.sys-dot{width:22px;height:22px;border-radius:4px;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.sys-dot.got{background:var(--green-bg);color:var(--green);} .sys-dot.partial{background:var(--amber-bg);color:var(--amber);} .sys-dot.missing{background:var(--red-bg);color:var(--red);}
+.stage-tag{font-size:11px;padding:3px 7px;border-radius:4px;border:1px solid var(--border);color:var(--text2);white-space:nowrap;}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;}
+.modal-sm{max-width:460px;}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;}
+.modal-title{font-size:18px;font-weight:600;} .modal-sub{font-size:12px;color:var(--text3);margin-top:4px;}
+.modal-close{font-size:20px;cursor:pointer;color:var(--text3);padding:4px;line-height:1;background:none;border:none;font-family:inherit;}
+.modal-body{padding:20px 24px;}
+.proj-meta-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+.meta-item label{font-size:11px;color:var(--text3);display:block;margin-bottom:4px;} .meta-item span{font-size:14px;font-weight:500;}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.field-label{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:8px;}
+.sys-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.sys-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid;}
+.sys-pill.got{background:var(--green-bg);color:var(--green);border-color:var(--green-border);} .sys-pill.partial{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border);} .sys-pill.missing{background:var(--red-bg);color:var(--red);border-color:var(--red-border);}
+.task-box{background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;font-size:13px;color:var(--text2);line-height:1.6;}
+.note-box{background:#fffbf0;border:1px solid var(--amber-border);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--amber);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:6px;} .form-group.full{grid-column:1/-1;}
+.form-group label{font-size:12px;color:var(--text2);font-weight:500;}
+.form-group input,.form-group select,.form-group textarea{padding:8px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#888;}
+.form-group textarea{resize:vertical;min-height:70px;}
+.sys-check-row{display:flex;gap:8px;flex-wrap:wrap;}
+.sys-check{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;font-size:13px;transition:all .15s;user-select:none;}
+.sys-check.checked{background:var(--green-bg);color:var(--green);border-color:var(--green-border);} .sys-check.partial-check{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border);}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+.empty{text-align:center;padding:40px;color:var(--text3);font-size:14px;}
+.loading-cell{text-align:center;padding:30px;color:var(--text3);}
+.page{display:none;} .page.active{display:block;}
+.search-bar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+.search-bar input{flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;outline:none;background:var(--surface);font-family:inherit;}
+.filter-pills{display:flex;gap:6px;flex-wrap:wrap;}
+.filter-pill{padding:4px 10px;border-radius:20px;border:1px solid var(--border2);font-size:12px;cursor:pointer;color:var(--text2);transition:all .15s;}
+.filter-pill.active{background:var(--text);color:#fff;border-color:var(--text);}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+/* Cards */
+.card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+.card-name{font-size:15px;font-weight:600;}
+.card-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+.card-meta{font-size:12px;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.card-actions{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.type-pill{font-size:11px;font-weight:500;border-radius:4px;padding:2px 8px;border:1px solid;display:inline-block;}
+/* Color swatches */
+.color-row{display:flex;gap:8px;flex-wrap:wrap;}
+.color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .15s;}
+.color-swatch.selected{border-color:var(--text);}
+/* Company type badge */
+.ctype-badge{font-size:11px;font-weight:500;border-radius:4px;padding:2px 8px;border:1px solid;}
+/* Related companies in project detail */
+.rel-list{display:flex;flex-direction:column;gap:8px;}
+.rel-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:var(--radius-sm);}
+.rel-type{font-size:11px;color:var(--text3);min-width:90px;}
+.rel-name{font-size:13px;font-weight:500;}
 </style>
 </head>
 <body>
@@ -146,7 +130,11 @@
     <div class="nav-item active" id="nav-dashboard" onclick="BIM.showPage('dashboard')"><span>◉</span>儀表板</div>
     <div class="nav-item" id="nav-projects" onclick="BIM.showPage('projects')"><span>▦</span>所有專案</div>
     <div class="nav-item" id="nav-alerts" onclick="BIM.showPage('alerts')"><span>⚑</span>警示追蹤</div>
+    <div class="nav-section">資料管理</div>
     <div class="nav-item" id="nav-members" onclick="BIM.showPage('members')"><span>👤</span>員工管理</div>
+    <div class="nav-item" id="nav-clients" onclick="BIM.showPage('clients')"><span>🏢</span>業主管理</div>
+    <div class="nav-item" id="nav-companies" onclick="BIM.showPage('companies')"><span>🔧</span>廠商管理</div>
+    <div class="nav-item" id="nav-ctypes" onclick="BIM.showPage('ctypes')"><span>🏷</span>廠商類別</div>
     <div class="nav-section">操作</div>
     <div class="nav-item" onclick="BIM.openAddModal()"><span>＋</span>新增專案</div>
   </div>
@@ -171,8 +159,8 @@
         <button class="btn btn-sm" onclick="BIM.showPage('projects')">查看全部</button>
       </div>
       <div class="proj-table-wrap table-scroll">
-        <table class="proj-table"><thead><tr><th>專案名稱</th><th>機電主辦</th><th>目前階段</th><th>截止日期</th><th>圖資（電消給汙空）</th><th>狀態</th></tr></thead>
-        <tbody id="dash-proj-body"><tr><td colspan="6" class="loading-cell">載入中...</td></tr></tbody></table>
+        <table class="proj-table"><thead><tr><th>專案名稱</th><th>業主</th><th>機電主辦</th><th>目前階段</th><th>截止日期</th><th>圖資（電消給汙空）</th><th>狀態</th></tr></thead>
+        <tbody id="dash-proj-body"><tr><td colspan="7" class="loading-cell">載入中...</td></tr></tbody></table>
       </div>
     </div>
 
@@ -183,7 +171,7 @@
         <button class="btn btn-primary btn-sm" onclick="BIM.openAddModal()">＋ 新增專案</button>
       </div>
       <div class="search-bar">
-        <input type="text" placeholder="搜尋專案名稱..." id="search-input" oninput="BIM.renderProjects()">
+        <input type="text" placeholder="搜尋專案名稱、業主..." id="search-input" oninput="BIM.renderProjects()">
         <div class="filter-pills">
           <div class="filter-pill active" onclick="BIM.setFilter('all',this)">全部</div>
           <div class="filter-pill" onclick="BIM.setFilter('施工',this)">施工中</div>
@@ -193,7 +181,7 @@
         </div>
       </div>
       <div class="proj-table-wrap table-scroll">
-        <table class="proj-table"><thead><tr><th>專案名稱</th><th>專案主辦</th><th>機電主辦</th><th>目前階段</th><th>截止日期</th><th>施工樓層</th><th>圖資（電消給汙空）</th><th>模型現況</th><th>狀態</th></tr></thead>
+        <table class="proj-table"><thead><tr><th>專案名稱</th><th>業主</th><th>專案主辦</th><th>機電主辦</th><th>目前階段</th><th>截止日期</th><th>施工樓層</th><th>圖資（電消給汙空）</th><th>狀態</th></tr></thead>
         <tbody id="proj-body"><tr><td colspan="9" class="loading-cell">載入中...</td></tr></tbody></table>
       </div>
     </div>
@@ -207,10 +195,49 @@
     <!-- Members -->
     <div class="page" id="page-members">
       <div class="page-header">
-        <div><div class="page-title">員工管理</div><div class="page-sub">管理專案主辦與機電主辦人員</div></div>
+        <div><div class="page-title">員工管理</div></div>
         <button class="btn btn-primary btn-sm" onclick="BIM.openAddMemberModal()">＋ 新增員工</button>
       </div>
-      <div class="member-grid" id="member-grid"><div class="empty" style="grid-column:1/-1">載入中...</div></div>
+      <div class="card-grid" id="member-grid"><div class="empty" style="grid-column:1/-1">載入中...</div></div>
+    </div>
+
+    <!-- Clients -->
+    <div class="page" id="page-clients">
+      <div class="page-header">
+        <div><div class="page-title">業主管理</div><div class="page-sub">管理業主資料，可跨專案共用</div></div>
+        <button class="btn btn-primary btn-sm" onclick="BIM.openAddClientModal()">＋ 新增業主</button>
+      </div>
+      <div class="proj-table-wrap table-scroll">
+        <table class="proj-table"><thead><tr><th>業主名稱</th><th>聯絡人</th><th>電話</th><th>Email</th><th>相關專案數</th><th>備註</th><th></th></tr></thead>
+        <tbody id="client-body"><tr><td colspan="7" class="loading-cell">載入中...</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- Companies -->
+    <div class="page" id="page-companies">
+      <div class="page-header">
+        <div><div class="page-title">廠商管理</div><div class="page-sub">建築設計、機電設計、營造、施工等單位</div></div>
+        <button class="btn btn-primary btn-sm" onclick="BIM.openAddCompanyModal()">＋ 新增廠商</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" placeholder="搜尋廠商名稱..." id="company-search" oninput="BIM.renderCompanies()">
+        <div class="filter-pills" id="ctype-filter-pills">
+          <div class="filter-pill active" onclick="BIM.setCompanyFilter('all',this)">全部</div>
+        </div>
+      </div>
+      <div class="proj-table-wrap table-scroll">
+        <table class="proj-table"><thead><tr><th>廠商名稱</th><th>類別</th><th>聯絡人</th><th>電話</th><th>Email</th><th>相關專案數</th><th>備註</th><th></th></tr></thead>
+        <tbody id="company-body"><tr><td colspan="8" class="loading-cell">載入中...</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- Company Types -->
+    <div class="page" id="page-ctypes">
+      <div class="page-header">
+        <div><div class="page-title">廠商類別</div><div class="page-sub">自訂廠商分類，例如：建築設計、機電設計、營造...</div></div>
+        <button class="btn btn-primary btn-sm" onclick="BIM.openAddCtypeModal()">＋ 新增類別</button>
+      </div>
+      <div class="card-grid" id="ctype-grid"><div class="empty" style="grid-column:1/-1">載入中...</div></div>
     </div>
   </div>
 </div>
@@ -237,6 +264,7 @@
       <div class="form-grid">
         <div class="form-group"><label>專案名稱 *</label><input id="f-name" placeholder="例：明新、大華"></div>
         <div class="form-group"><label>合約範圍</label><input id="f-contract" placeholder="例：全系統竣工"></div>
+        <div class="form-group"><label>業主</label><select id="f-client"><option value="">— 請選擇 —</option></select></div>
         <div class="form-group"><label>專案主辦</label><select id="f-owner"><option value="">— 請選擇 —</option></select></div>
         <div class="form-group"><label>機電主辦</label><select id="f-mep"><option value="">— 請選擇 —</option></select></div>
         <div class="form-group"><label>目前階段</label>
@@ -245,6 +273,7 @@
         <div class="form-group"><label>目前施工樓層</label><input id="f-floor" placeholder="例：已到B1樓版"></div>
         <div class="form-group"><label>下階段截止日期</label><input type="date" id="f-deadline"></div>
         <div class="form-group"><label>最後完工日期</label><input type="date" id="f-final"></div>
+        <div class="form-group full"><label>相關廠商（可複選）</label><div id="f-companies-wrap" style="display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--border2);border-radius:var(--radius-sm);max-height:200px;overflow-y:auto;"></div></div>
         <div class="form-group full">
           <label>圖資取得狀況（點擊切換：未取得 → 部分取得 → 已取得）</label>
           <div class="sys-check-row">
@@ -270,25 +299,79 @@
   </div>
 </div>
 
-<!-- Add/Edit Member Modal -->
+<!-- Member Modal -->
 <div class="modal-overlay" id="member-modal" onclick="if(event.target===this)BIM.closeModal('member-modal')">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-header">
-      <div><div class="modal-title" id="member-modal-title">新增員工</div></div>
-      <button class="modal-close" onclick="BIM.closeModal('member-modal')">✕</button>
-    </div>
+  <div class="modal modal-sm">
+    <div class="modal-header"><div><div class="modal-title" id="member-modal-title">新增員工</div></div><button class="modal-close" onclick="BIM.closeModal('member-modal')">✕</button></div>
     <div class="modal-body">
       <div class="form-grid" style="grid-template-columns:1fr">
         <div class="form-group"><label>姓名 *</label><input id="m-name" placeholder="例：昱安"></div>
-        <div class="form-group"><label>職稱</label>
-          <select id="m-role"><option>專案主辦</option><option>機電主辦</option><option>專案主辦/機電主辦</option><option>委外</option></select>
-        </div>
+        <div class="form-group"><label>職稱</label><select id="m-role"><option>專案主辦</option><option>機電主辦</option><option>專案主辦/機電主辦</option><option>委外</option></select></div>
         <div class="form-group"><label>備註</label><input id="m-note" placeholder="選填"></div>
       </div>
-      <div class="form-actions">
-        <button class="btn" onclick="BIM.closeModal('member-modal')">取消</button>
-        <button class="btn btn-primary" id="member-save-btn" onclick="BIM.saveMember()">儲存</button>
+      <div class="form-actions"><button class="btn" onclick="BIM.closeModal('member-modal')">取消</button><button class="btn btn-primary" id="member-save-btn" onclick="BIM.saveMember()">儲存</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Client Modal -->
+<div class="modal-overlay" id="client-modal" onclick="if(event.target===this)BIM.closeModal('client-modal')">
+  <div class="modal modal-sm">
+    <div class="modal-header"><div><div class="modal-title" id="client-modal-title">新增業主</div></div><button class="modal-close" onclick="BIM.closeModal('client-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-group"><label>業主名稱 *</label><input id="cl-name" placeholder="例：中台建設"></div>
+        <div class="form-group"><label>聯絡人</label><input id="cl-contact" placeholder="例：王經理"></div>
+        <div class="form-group"><label>電話</label><input id="cl-phone" placeholder="例：02-1234-5678"></div>
+        <div class="form-group"><label>Email</label><input id="cl-email" placeholder="例：wang@company.com"></div>
+        <div class="form-group"><label>備註</label><textarea id="cl-note" style="min-height:60px" placeholder="選填"></textarea></div>
       </div>
+      <div class="form-actions"><button class="btn" onclick="BIM.closeModal('client-modal')">取消</button><button class="btn btn-primary" id="client-save-btn" onclick="BIM.saveClient()">儲存</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Company Modal -->
+<div class="modal-overlay" id="company-modal" onclick="if(event.target===this)BIM.closeModal('company-modal')">
+  <div class="modal modal-sm">
+    <div class="modal-header"><div><div class="modal-title" id="company-modal-title">新增廠商</div></div><button class="modal-close" onclick="BIM.closeModal('company-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-group"><label>廠商名稱 *</label><input id="co-name" placeholder="例：大日建築師事務所"></div>
+        <div class="form-group"><label>廠商類別 *</label><select id="co-type"><option value="">— 請選擇 —</option></select></div>
+        <div class="form-group"><label>聯絡人</label><input id="co-contact" placeholder="例：陳建築師"></div>
+        <div class="form-group"><label>電話</label><input id="co-phone"></div>
+        <div class="form-group"><label>Email</label><input id="co-email"></div>
+        <div class="form-group"><label>備註</label><textarea id="co-note" style="min-height:60px" placeholder="選填"></textarea></div>
+      </div>
+      <div class="form-actions"><button class="btn" onclick="BIM.closeModal('company-modal')">取消</button><button class="btn btn-primary" id="company-save-btn" onclick="BIM.saveCompany()">儲存</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Company Type Modal -->
+<div class="modal-overlay" id="ctype-modal" onclick="if(event.target===this)BIM.closeModal('ctype-modal')">
+  <div class="modal modal-sm">
+    <div class="modal-header"><div><div class="modal-title" id="ctype-modal-title">新增廠商類別</div></div><button class="modal-close" onclick="BIM.closeModal('ctype-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="grid-template-columns:1fr">
+        <div class="form-group"><label>類別名稱 *</label><input id="ct-name" placeholder="例：建築設計、機電施工..."></div>
+        <div class="form-group">
+          <label>顏色標籤</label>
+          <div class="color-row" id="ct-color-row">
+            <div class="color-swatch selected" style="background:#E6F1FB" data-color="#E6F1FB" onclick="BIM.selectColor(this)"></div>
+            <div class="color-swatch" style="background:#EAF3DE" data-color="#EAF3DE" onclick="BIM.selectColor(this)"></div>
+            <div class="color-swatch" style="background:#FAEEDA" data-color="#FAEEDA" onclick="BIM.selectColor(this)"></div>
+            <div class="color-swatch" style="background:#FCEBEB" data-color="#FCEBEB" onclick="BIM.selectColor(this)"></div>
+            <div class="color-swatch" style="background:#F0EFE9" data-color="#F0EFE9" onclick="BIM.selectColor(this)"></div>
+            <div class="color-swatch" style="background:#EEEDFE" data-color="#EEEDFE" onclick="BIM.selectColor(this)"></div>
+            <div class="color-swatch" style="background:#E1F5EE" data-color="#E1F5EE" onclick="BIM.selectColor(this)"></div>
+            <div class="color-swatch" style="background:#FBEAF0" data-color="#FBEAF0" onclick="BIM.selectColor(this)"></div>
+          </div>
+        </div>
+        <div class="form-group"><label>備註</label><input id="ct-note" placeholder="選填"></div>
+      </div>
+      <div class="form-actions"><button class="btn" onclick="BIM.closeModal('ctype-modal')">取消</button><button class="btn btn-primary" id="ctype-save-btn" onclick="BIM.saveCtype()">儲存</button></div>
     </div>
   </div>
 </div>
@@ -307,31 +390,35 @@ firebase.initializeApp({
   appId:"1:957769782377:web:492f69c36f0247006efef8"
 });
 const db = firebase.firestore();
-
 const SYS = ['電','消','給','汙','空'];
-let projects=[], members=[], editingProjId=null, editingMemberId=null, stageFilter='all';
-let sysState={電:'missing',消:'missing',給:'missing',汙:'missing',空:'missing'};
 
+let projects=[], members=[], clients=[], companies=[], ctypes=[];
+let editingProjId=null, editingMemberId=null, editingClientId=null, editingCompanyId=null, editingCtypeId=null;
+let stageFilter='all', companyFilter='all';
+let sysState={電:'missing',消:'missing',給:'missing',汙:'missing',空:'missing'};
+let selectedColor='#E6F1FB';
+let selectedCompanyIds=[];
+
+// Sync status
 function setSyncStatus(s){
   document.getElementById('sync-dot').className='sync-dot '+s;
   document.getElementById('sync-label').textContent=s==='live'?'即時同步中':s==='syncing'?'同步中...':'連線失敗';
 }
 setSyncStatus('syncing');
 
-// Realtime listeners
-db.collection('members').orderBy('name').onSnapshot(snap=>{
-  members=snap.docs.map(d=>({id:d.id,...d.data()}));
-  populateMemberDropdowns();
-  renderMembers();
-});
-db.collection('projects').onSnapshot(snap=>{
-  projects=snap.docs.map(d=>({id:d.id,...d.data()}));
-  setSyncStatus('live');
-  renderAll();
-},e=>setSyncStatus('error'));
+// Listeners
+db.collection('ctypes').orderBy('name').onSnapshot(snap=>{ctypes=snap.docs.map(d=>({id:d.id,...d.data()}));renderCtypeFilterPills();renderCtypes();populateCoTypeDropdown();});
+db.collection('members').orderBy('name').onSnapshot(snap=>{members=snap.docs.map(d=>({id:d.id,...d.data()}));populateMemberDropdowns();renderMembers();});
+db.collection('clients').orderBy('name').onSnapshot(snap=>{clients=snap.docs.map(d=>({id:d.id,...d.data()}));populateClientDropdown();renderClients();});
+db.collection('companies').orderBy('name').onSnapshot(snap=>{companies=snap.docs.map(d=>({id:d.id,...d.data()}));populateCompaniesWrap();renderCompanies();});
+db.collection('projects').onSnapshot(snap=>{projects=snap.docs.map(d=>({id:d.id,...d.data()}));setSyncStatus('live');renderAll();},e=>setSyncStatus('error'));
 
-// ── Helpers ───────────────────────────────────────────
-function getMemberName(id){ const m=members.find(x=>x.id===id); return m?m.name:'—'; }
+// Helpers
+function getMemberName(id){const m=members.find(x=>x.id===id);return m?m.name:'—';}
+function getClientName(id){const c=clients.find(x=>x.id===id);return c?c.name:'—';}
+function getCompanyName(id){const c=companies.find(x=>x.id===id);return c?c.name:'—';}
+function getCtypeName(id){const t=ctypes.find(x=>x.id===id);return t?t.name:'';}
+function getCtypeColor(id){const t=ctypes.find(x=>x.id===id);return t?t.color:'#F0EFE9';}
 function parseDate(s){if(!s)return null;const[y,m,d]=s.split('-');return new Date(y,m-1,d);}
 function daysUntil(s){if(!s)return null;const d=parseDate(s);return d?Math.round((d-new Date())/86400000):null;}
 function formatDate(s){if(!s)return'—';const d=parseDate(s);return`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;}
@@ -355,29 +442,69 @@ function alertMsg(p){
 function sysDots(sys){return SYS.map(k=>{const s=sys?.[k]||'missing';return`<div class="sys-dot ${s}" title="${k}：${s==='got'?'已取得':s==='partial'?'部分取得':'未取得'}">${s==='got'?'✓':s==='partial'?'△':'✕'}</div>`;}).join('');}
 function statusBadge(p){const lv=alertLevel(p);return lv==='urgent'?'<span class="badge badge-red">緊急</span>':lv==='warn'?'<span class="badge badge-amber">注意</span>':'<span class="badge badge-green">正常</span>';}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-function avatarColor(name){const colors=['#e6f1fb','#eaf3de','#faeeda','#fcebeb','#f0efe9'];return colors[name.charCodeAt(0)%colors.length];}
-function avatarText(name){const colors2=['#185fa5','#3b6d11','#854f0b','#a32d2d','#5a5a54'];return colors2[name.charCodeAt(0)%colors2.length];}
 
+// Populate dropdowns
 function populateMemberDropdowns(){
   ['f-owner','f-mep'].forEach(id=>{
-    const sel=document.getElementById(id);
+    const sel=document.getElementById(id);if(!sel)return;
     const cur=sel.value;
     sel.innerHTML='<option value="">— 請選擇 —</option>';
-    members.forEach(m=>{ const opt=document.createElement('option');opt.value=m.id;opt.textContent=m.name+(m.role?' ('+m.role+')':'');sel.appendChild(opt); });
+    members.forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=m.name+(m.role?' ('+m.role+')':'');sel.appendChild(o);});
     sel.value=cur;
   });
 }
+function populateClientDropdown(){
+  const sel=document.getElementById('f-client');if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— 請選擇 —</option>';
+  clients.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;sel.appendChild(o);});
+  sel.value=cur;
+}
+function populateCoTypeDropdown(){
+  const sel=document.getElementById('co-type');if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— 請選擇 —</option>';
+  ctypes.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o);});
+  sel.value=cur;
+}
+function populateCompaniesWrap(){
+  const wrap=document.getElementById('f-companies-wrap');if(!wrap)return;
+  wrap.innerHTML='';
+  if(!companies.length){wrap.innerHTML='<div style="color:var(--text3);font-size:12px">尚無廠商資料，請先至廠商管理新增</div>';return;}
+  companies.forEach(c=>{
+    const typeName=getCtypeName(c.typeId);
+    const typeColor=getCtypeColor(c.typeId);
+    const checked=selectedCompanyIds.includes(c.id);
+    const row=document.createElement('label');
+    row.style.cssText='display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;padding:4px 0;';
+    row.innerHTML=`<input type="checkbox" value="${c.id}" ${checked?'checked':''} style="width:15px;height:15px;cursor:pointer"> <span>${c.name}</span> ${typeName?`<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:${typeColor};color:var(--text2)">${typeName}</span>`:''}`;
+    row.querySelector('input').addEventListener('change',e=>{
+      if(e.target.checked){if(!selectedCompanyIds.includes(c.id))selectedCompanyIds.push(c.id);}
+      else{selectedCompanyIds=selectedCompanyIds.filter(x=>x!==c.id);}
+    });
+    wrap.appendChild(row);
+  });
+}
+function renderCtypeFilterPills(){
+  const wrap=document.getElementById('ctype-filter-pills');if(!wrap)return;
+  wrap.innerHTML='<div class="filter-pill active" onclick="BIM.setCompanyFilter(\'all\',this)">全部</div>';
+  ctypes.forEach(t=>{
+    const pill=document.createElement('div');
+    pill.className='filter-pill';
+    pill.textContent=t.name;
+    pill.onclick=function(){BIM.setCompanyFilter(t.id,this);};
+    wrap.appendChild(pill);
+  });
+}
 
-// ── Render ────────────────────────────────────────────
+// Render all
 function renderAll(){renderStats();renderDashAlerts();renderDashTable();renderProjects();renderAllAlerts();}
-
 function renderStats(){
   document.getElementById('stat-total').textContent=projects.length;
   document.getElementById('stat-urgent').textContent=projects.filter(p=>alertLevel(p)==='urgent').length;
   document.getElementById('stat-nodoc').textContent=projects.filter(p=>SYS.some(k=>p.systems?.[k]==='missing')).length;
   document.getElementById('stat-month').textContent=projects.filter(p=>{const d=daysUntil(p.deadline);return d!==null&&d>=0&&d<=30;}).length;
 }
-
 function alertRowHTML(p){
   const lv=alertLevel(p),days=daysUntil(p.deadline);
   const dt=days!==null?(days<0?`<span class="days-tag red">逾期${Math.abs(days)}天</span>`:`<span class="days-tag ${lv==='urgent'?'red':'amber'}">剩${days}天</span>`):'';
@@ -386,68 +513,115 @@ function alertRowHTML(p){
     <div class="alert-info"><div class="alert-name">${p.name}&nbsp;<span style="font-size:12px;font-weight:400;color:var(--text2)">${p.stage||''}</span></div><div class="alert-sub">${alertMsg(p)}</div></div>
     ${dt}</div>`;
 }
-
 function renderDashAlerts(){
   const list=projects.filter(p=>alertLevel(p)!=='ok').sort((a,b)=>({urgent:0,warn:1,ok:2}[alertLevel(a)]-{urgent:0,warn:1,ok:2}[alertLevel(b)]));
   document.getElementById('dash-alerts').innerHTML=list.length?list.map(alertRowHTML).join(''):'<div class="empty">目前沒有警示 🎉</div>';
 }
-
 function renderDashTable(){
   const list=[...projects].sort((a,b)=>({urgent:0,warn:1,ok:2}[alertLevel(a)]-{urgent:0,warn:1,ok:2}[alertLevel(b)]));
   document.getElementById('dash-proj-body').innerHTML=list.map(p=>`<tr onclick="BIM.openDetail('${p.id}')">
     <td><strong>${p.name}</strong></td>
+    <td>${getClientName(p.clientId)||p.client||'—'}</td>
     <td>${getMemberName(p.mepId)||p.mep||'—'}</td>
     <td><span class="stage-tag">${p.stage||'—'}</span></td>
     <td>${formatDate(p.deadline)}</td>
     <td><div class="systems">${sysDots(p.systems)}</div></td>
-    <td>${statusBadge(p)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">尚無專案</td></tr>';
+    <td>${statusBadge(p)}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">尚無專案</td></tr>';
 }
-
 function renderProjects(){
   const q=(document.getElementById('search-input')?.value||'').toLowerCase();
   const list=projects.filter(p=>{
-    const ownerName=getMemberName(p.ownerId)||p.owner||'';
-    const mepName=getMemberName(p.mepId)||p.mep||'';
-    return(p.name+ownerName+mepName).toLowerCase().includes(q)&&(stageFilter==='all'||(p.stage||'').includes(stageFilter));
+    const clientName=getClientName(p.clientId)||p.client||'';
+    return(p.name+clientName).toLowerCase().includes(q)&&(stageFilter==='all'||(p.stage||'').includes(stageFilter));
   });
   document.getElementById('proj-body').innerHTML=list.map(p=>`<tr onclick="BIM.openDetail('${p.id}')">
     <td><strong>${p.name}</strong>${p.contract?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${p.contract}</div>`:''}</td>
+    <td>${getClientName(p.clientId)||p.client||'—'}</td>
     <td>${getMemberName(p.ownerId)||p.owner||'—'}</td>
     <td>${getMemberName(p.mepId)||p.mep||'—'}</td>
     <td><span class="stage-tag">${p.stage||'—'}</span></td>
     <td>${formatDate(p.deadline)}</td>
     <td style="font-size:12px;color:var(--text2)">${p.floor||'—'}</td>
     <td><div class="systems">${sysDots(p.systems)}</div></td>
-    <td style="font-size:12px;color:var(--text2);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.model||'—'}</td>
     <td>${statusBadge(p)}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">找不到符合的專案</td></tr>';
 }
-
 function renderAllAlerts(){
   const list=projects.filter(p=>alertLevel(p)!=='ok').sort((a,b)=>({urgent:0,warn:1}[alertLevel(a)]-{urgent:0,warn:1}[alertLevel(b)]));
   document.getElementById('all-alerts').innerHTML=list.length?list.map(alertRowHTML).join(''):'<div class="empty">目前沒有警示 🎉</div>';
 }
-
 function renderMembers(){
-  const grid=document.getElementById('member-grid');
+  const grid=document.getElementById('member-grid');if(!grid)return;
   if(!members.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">尚無員工資料</div>';return;}
   grid.innerHTML=members.map(m=>{
-    const projCount=projects.filter(p=>p.ownerId===m.id||p.mepId===m.id).length;
-    const bg=avatarColor(m.name),tc=avatarText(m.name);
-    return`<div class="member-card">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div class="member-avatar" style="background:${bg};color:${tc}">${m.name.slice(0,1)}</div>
-        <div><div class="member-name">${m.name}</div><div class="member-role">${m.role||''}</div></div>
-      </div>
-      <div class="member-proj-count">負責專案：${projCount} 個</div>
-      <div class="member-actions">
+    const pc=projects.filter(p=>p.ownerId===m.id||p.mepId===m.id).length;
+    return`<div class="card">
+      <div class="card-header"><div><div class="card-name">${m.name}</div><div class="card-sub">${m.role||''}</div></div></div>
+      <div class="card-meta">負責專案：${pc} 個</div>
+      ${m.note?`<div style="font-size:12px;color:var(--text3)">${m.note}</div>`:''}
+      <div class="card-actions">
         <button class="btn btn-sm" onclick="BIM.openEditMemberModal('${m.id}')">✏️ 編輯</button>
-        <button class="btn btn-sm" style="color:var(--red);border-color:var(--red-border)" onclick="BIM.confirmDeleteMember('${m.id}')">🗑</button>
+        <button class="btn btn-sm btn-danger" onclick="BIM.confirmDeleteMember('${m.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderClients(){
+  const body=document.getElementById('client-body');if(!body)return;
+  if(!clients.length){body.innerHTML='<tr><td colspan="7" class="empty">尚無業主資料</td></tr>';return;}
+  body.innerHTML=clients.map(c=>{
+    const pc=projects.filter(p=>p.clientId===c.id).length;
+    return`<tr>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.contact||'—'}</td><td>${c.phone||'—'}</td><td>${c.email||'—'}</td>
+      <td>${pc} 個</td>
+      <td style="max-width:150px;font-size:12px;color:var(--text2)">${c.note||'—'}</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="BIM.openEditClientModal('${c.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="BIM.confirmDeleteClient('${c.id}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+function renderCompanies(){
+  const body=document.getElementById('company-body');if(!body)return;
+  const q=(document.getElementById('company-search')?.value||'').toLowerCase();
+  const list=companies.filter(c=>{
+    const typeName=getCtypeName(c.typeId);
+    return c.name.toLowerCase().includes(q)&&(companyFilter==='all'||c.typeId===companyFilter);
+  });
+  if(!list.length){body.innerHTML='<tr><td colspan="8" class="empty">找不到符合的廠商</td></tr>';return;}
+  body.innerHTML=list.map(c=>{
+    const pc=projects.filter(p=>(p.companyIds||[]).includes(c.id)).length;
+    const tc=getCtypeColor(c.typeId),tn=getCtypeName(c.typeId);
+    return`<tr>
+      <td><strong>${c.name}</strong></td>
+      <td>${tn?`<span class="ctype-badge" style="background:${tc};color:var(--text2);border-color:${tc}">${tn}</span>`:'—'}</td>
+      <td>${c.contact||'—'}</td><td>${c.phone||'—'}</td><td>${c.email||'—'}</td>
+      <td>${pc} 個</td>
+      <td style="max-width:120px;font-size:12px;color:var(--text2)">${c.note||'—'}</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn btn-sm" onclick="BIM.openEditCompanyModal('${c.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="BIM.confirmDeleteCompany('${c.id}')">🗑</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+function renderCtypes(){
+  const grid=document.getElementById('ctype-grid');if(!grid)return;
+  if(!ctypes.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">尚無類別，請新增</div>';return;}
+  grid.innerHTML=ctypes.map(t=>{
+    const cc=companies.filter(c=>c.typeId===t.id).length;
+    return`<div class="card" style="border-left:4px solid ${t.color||'#ccc'}">
+      <div class="card-header"><div><div class="card-name">${t.name}</div><div class="card-sub">廠商數：${cc} 間</div></div></div>
+      ${t.note?`<div style="font-size:12px;color:var(--text3);margin-bottom:8px">${t.note}</div>`:''}
+      <div class="card-actions">
+        <button class="btn btn-sm" onclick="BIM.openEditCtypeModal('${t.id}')">✏️ 編輯</button>
+        <button class="btn btn-sm btn-danger" onclick="BIM.confirmDeleteCtype('${t.id}')">🗑</button>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── BIM namespace ─────────────────────────────────────
 window.BIM = {
   showPage(name){
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -455,12 +629,8 @@ window.BIM = {
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     document.getElementById('nav-'+name)?.classList.add('active');
   },
-  setFilter(val,el){
-    stageFilter=val;
-    document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
-    el.classList.add('active');
-    renderProjects();
-  },
+  setFilter(val,el){stageFilter=val;document.querySelectorAll('#page-projects .filter-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderProjects();},
+  setCompanyFilter(val,el){companyFilter=val;document.querySelectorAll('#ctype-filter-pills .filter-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderCompanies();},
   closeModal(id){document.getElementById(id)?.classList.remove('open');},
   toggleSys(key){
     const order=['missing','partial','got'];
@@ -469,15 +639,26 @@ window.BIM = {
     el.className='sys-check'+(st==='got'?' checked':st==='partial'?' partial-check':'');
     el.textContent=key+(st==='got'?' ✓':st==='partial'?' △':'');
   },
+  selectColor(el){
+    document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedColor=el.dataset.color;
+  },
+  renderProjects,
+
+  // ── Project ──────────────────────────────────────────
   openAddModal(){
     editingProjId=null;
     document.getElementById('add-modal-title').textContent='新增專案';
     ['name','contract','floor','deadline','final','doc-note','model','task-scope','task-done','task-todo','note'].forEach(k=>{const el=document.getElementById('f-'+k);if(el)el.value='';});
     document.getElementById('f-owner').value='';
     document.getElementById('f-mep').value='';
+    document.getElementById('f-client').value='';
     document.getElementById('f-stage').value='施工階段';
     sysState={電:'missing',消:'missing',給:'missing',汙:'missing',空:'missing'};
     SYS.forEach(k=>{const el=document.getElementById('sc-'+k);el.className='sys-check';el.textContent=k;});
+    selectedCompanyIds=[];
+    populateCompaniesWrap();
     this.closeModal('detail-modal');
     document.getElementById('add-modal').classList.add('open');
   },
@@ -487,6 +668,7 @@ window.BIM = {
     document.getElementById('add-modal-title').textContent='編輯專案：'+p.name;
     document.getElementById('f-name').value=p.name||'';
     document.getElementById('f-contract').value=p.contract||'';
+    document.getElementById('f-client').value=p.clientId||'';
     document.getElementById('f-owner').value=p.ownerId||'';
     document.getElementById('f-mep').value=p.mepId||'';
     document.getElementById('f-stage').value=p.stage||'施工階段';
@@ -501,6 +683,8 @@ window.BIM = {
     document.getElementById('f-note').value=p.note||'';
     sysState={...(p.systems||{電:'missing',消:'missing',給:'missing',汙:'missing',空:'missing'})};
     SYS.forEach(k=>{const el=document.getElementById('sc-'+k),st=sysState[k];el.className='sys-check'+(st==='got'?' checked':st==='partial'?' partial-check':'');el.textContent=k+(st==='got'?' ✓':st==='partial'?' △':'');});
+    selectedCompanyIds=[...(p.companyIds||[])];
+    populateCompaniesWrap();
     this.closeModal('detail-modal');
     document.getElementById('add-modal').classList.add('open');
   },
@@ -510,16 +694,17 @@ window.BIM = {
     const btn=document.getElementById('save-btn');btn.textContent='儲存中...';btn.disabled=true;
     const ownerId=document.getElementById('f-owner').value;
     const mepId=document.getElementById('f-mep').value;
-    const ownerM=members.find(x=>x.id===ownerId);
-    const mepM=members.find(x=>x.id===mepId);
+    const clientId=document.getElementById('f-client').value;
     const data={
       name,contract:document.getElementById('f-contract').value,
-      ownerId,owner:ownerM?ownerM.name:'',
-      mepId,mep:mepM?mepM.name:'',
+      clientId,client:getClientName(clientId),
+      ownerId,owner:getMemberName(ownerId),
+      mepId,mep:getMemberName(mepId),
       stage:document.getElementById('f-stage').value,
       floor:document.getElementById('f-floor').value,
       deadline:document.getElementById('f-deadline').value,
       final:document.getElementById('f-final').value,
+      companyIds:[...selectedCompanyIds],
       systems:{...sysState},
       docNote:document.getElementById('f-doc-note').value,
       model:document.getElementById('f-model').value,
@@ -546,23 +731,31 @@ window.BIM = {
     const p=projects.find(x=>x.id===id);if(!p)return;
     const ownerName=getMemberName(p.ownerId)||p.owner||'—';
     const mepName=getMemberName(p.mepId)||p.mep||'—';
+    const clientName=getClientName(p.clientId)||p.client||'—';
     document.getElementById('detail-title').textContent=p.name;
-    document.getElementById('detail-sub').textContent=(p.contract||'')+' ｜ 專案主辦：'+ownerName+' ｜ 機電主辦：'+mepName;
+    document.getElementById('detail-sub').textContent=(p.contract||'')+' ｜ 業主：'+clientName;
     const days=daysUntil(p.deadline);
     const dc=days!==null&&days<=7?'var(--red)':days!==null&&days<=21?'var(--amber)':'var(--text)';
     const pills=SYS.map(k=>{const s=p.systems?.[k]||'missing';return`<div class="sys-pill ${s}">${k} ${s==='got'?'已取得':s==='partial'?'部分取得':'未取得'}</div>`;}).join('');
+    const relCompanies=(p.companyIds||[]).map(cid=>{
+      const c=companies.find(x=>x.id===cid);if(!c)return'';
+      const tn=getCtypeName(c.typeId),tc=getCtypeColor(c.typeId);
+      return`<div class="rel-item"><span class="rel-type">${tn?`<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:${tc}">${tn}</span>`:''}</span><span class="rel-name">${c.name}</span>${c.contact?`<span style="font-size:12px;color:var(--text3)">${c.contact}</span>`:''}</div>`;
+    }).join('');
     document.getElementById('detail-body').innerHTML=`
       <div class="proj-meta-grid">
+        <div class="meta-item"><label>專案主辦</label><span>${ownerName}</span></div>
+        <div class="meta-item"><label>機電主辦</label><span>${mepName}</span></div>
         <div class="meta-item"><label>目前階段</label><span>${p.stage||'—'}</span></div>
         <div class="meta-item"><label>截止日期</label><span style="color:${dc}">${formatDate(p.deadline)}${days!==null?' ('+(days<0?'逾期'+Math.abs(days)+'天':'剩'+days+'天')+')':''}</span></div>
         <div class="meta-item"><label>最後完工日</label><span>${formatDate(p.final)}</span></div>
         <div class="meta-item"><label>目前施工樓層</label><span>${p.floor||'—'}</span></div>
-        <div class="meta-item"><label>模型現況</label><span>${p.model||'—'}</span></div>
       </div>
       <hr class="divider">
       <div class="field-label">圖資取得狀況</div>
       <div class="sys-row">${pills}</div>
       ${p.docNote?'<div class="task-box">'+p.docNote+'</div>':''}
+      ${relCompanies?`<hr class="divider"><div class="field-label">相關廠商</div><div class="rel-list">${relCompanies}</div>`:''}
       <hr class="divider">
       ${p.scope?'<div class="field-label">作業範圍</div><div class="task-box">'+p.scope+'</div>':''}
       ${p.done?'<div class="field-label">已完成</div><div class="task-box" style="border-left:3px solid var(--green)">'+p.done+'</div>':''}
@@ -570,49 +763,58 @@ window.BIM = {
       ${p.note?'<hr class="divider"><div class="note-box">備註：'+p.note+'</div>':''}
       <div style="display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
         <button class="btn btn-sm" onclick="BIM.openEditModal('`+id+`')">✏️ 編輯</button>
-        <button class="btn btn-sm" style="color:var(--red);border-color:var(--red-border)" onclick="BIM.confirmDelete('`+id+`')">🗑 刪除</button>
+        <button class="btn btn-sm btn-danger" onclick="BIM.confirmDelete('`+id+`')">🗑 刪除</button>
       </div>`;
     document.getElementById('detail-modal').classList.add('open');
   },
-  // Member CRUD
-  openAddMemberModal(){
-    editingMemberId=null;
-    document.getElementById('member-modal-title').textContent='新增員工';
-    document.getElementById('m-name').value='';
-    document.getElementById('m-role').value='專案主辦';
-    document.getElementById('m-note').value='';
-    document.getElementById('member-modal').classList.add('open');
-  },
-  openEditMemberModal(id){
-    const m=members.find(x=>x.id===id);if(!m)return;
-    editingMemberId=id;
-    document.getElementById('member-modal-title').textContent='編輯員工：'+m.name;
-    document.getElementById('m-name').value=m.name||'';
-    document.getElementById('m-role').value=m.role||'專案主辦';
-    document.getElementById('m-note').value=m.note||'';
-    document.getElementById('member-modal').classList.add('open');
-  },
+
+  // ── Member ────────────────────────────────────────────
+  openAddMemberModal(){editingMemberId=null;document.getElementById('member-modal-title').textContent='新增員工';document.getElementById('m-name').value='';document.getElementById('m-role').value='專案主辦';document.getElementById('m-note').value='';document.getElementById('member-modal').classList.add('open');},
+  openEditMemberModal(id){const m=members.find(x=>x.id===id);if(!m)return;editingMemberId=id;document.getElementById('member-modal-title').textContent='編輯員工：'+m.name;document.getElementById('m-name').value=m.name||'';document.getElementById('m-role').value=m.role||'專案主辦';document.getElementById('m-note').value=m.note||'';document.getElementById('member-modal').classList.add('open');},
   async saveMember(){
-    const name=document.getElementById('m-name').value.trim();
-    if(!name){alert('請填寫姓名');return;}
+    const name=document.getElementById('m-name').value.trim();if(!name){alert('請填寫姓名');return;}
     const btn=document.getElementById('member-save-btn');btn.textContent='儲存中...';btn.disabled=true;
     const data={name,role:document.getElementById('m-role').value,note:document.getElementById('m-note').value,updatedAt:new Date().toISOString()};
-    try{
-      if(editingMemberId){await db.collection('members').doc(editingMemberId).update(data);showToast('已更新員工資料');}
-      else{await db.collection('members').add(data);showToast('已新增員工');}
-      this.closeModal('member-modal');
-    }catch(e){alert('儲存失敗：'+e.message);}
+    try{if(editingMemberId){await db.collection('members').doc(editingMemberId).update(data);showToast('已更新員工');}else{await db.collection('members').add(data);showToast('已新增員工');}this.closeModal('member-modal');}catch(e){alert('儲存失敗：'+e.message);}
     btn.textContent='儲存';btn.disabled=false;
   },
-  async confirmDeleteMember(id){
-    const m=members.find(x=>x.id===id);if(!m)return;
-    const used=projects.filter(p=>p.ownerId===id||p.mepId===id).length;
-    if(used>0&&!confirm(`「${m.name}」目前負責 ${used} 個專案，確定還是要刪除嗎？`))return;
-    else if(used===0&&!confirm(`確定要刪除「${m.name}」嗎？`))return;
-    try{await db.collection('members').doc(id).delete();showToast('已刪除員工');}
-    catch(e){alert('刪除失敗：'+e.message);}
+  async confirmDeleteMember(id){const m=members.find(x=>x.id===id);if(!m)return;if(!confirm('確定要刪除「'+m.name+'」嗎？'))return;try{await db.collection('members').doc(id).delete();showToast('已刪除員工');}catch(e){alert('刪除失敗：'+e.message);}},
+
+  // ── Client ────────────────────────────────────────────
+  openAddClientModal(){editingClientId=null;document.getElementById('client-modal-title').textContent='新增業主';['cl-name','cl-contact','cl-phone','cl-email','cl-note'].forEach(k=>{const el=document.getElementById(k);if(el)el.value='';});document.getElementById('client-modal').classList.add('open');},
+  openEditClientModal(id){const c=clients.find(x=>x.id===id);if(!c)return;editingClientId=id;document.getElementById('client-modal-title').textContent='編輯業主：'+c.name;document.getElementById('cl-name').value=c.name||'';document.getElementById('cl-contact').value=c.contact||'';document.getElementById('cl-phone').value=c.phone||'';document.getElementById('cl-email').value=c.email||'';document.getElementById('cl-note').value=c.note||'';document.getElementById('client-modal').classList.add('open');},
+  async saveClient(){
+    const name=document.getElementById('cl-name').value.trim();if(!name){alert('請填寫業主名稱');return;}
+    const btn=document.getElementById('client-save-btn');btn.textContent='儲存中...';btn.disabled=true;
+    const data={name,contact:document.getElementById('cl-contact').value,phone:document.getElementById('cl-phone').value,email:document.getElementById('cl-email').value,note:document.getElementById('cl-note').value,updatedAt:new Date().toISOString()};
+    try{if(editingClientId){await db.collection('clients').doc(editingClientId).update(data);showToast('已更新業主');}else{await db.collection('clients').add(data);showToast('已新增業主');}this.closeModal('client-modal');}catch(e){alert('儲存失敗：'+e.message);}
+    btn.textContent='儲存';btn.disabled=false;
   },
-  renderProjects
+  async confirmDeleteClient(id){const c=clients.find(x=>x.id===id);if(!c)return;const pc=projects.filter(p=>p.clientId===id).length;if(!confirm('確定要刪除「'+c.name+'」嗎？'+(pc>0?'\n（此業主有 '+pc+' 個專案）':'')))return;try{await db.collection('clients').doc(id).delete();showToast('已刪除業主');}catch(e){alert('刪除失敗：'+e.message);}},
+
+  // ── Company ───────────────────────────────────────────
+  openAddCompanyModal(){editingCompanyId=null;document.getElementById('company-modal-title').textContent='新增廠商';['co-name','co-contact','co-phone','co-email','co-note'].forEach(k=>{const el=document.getElementById(k);if(el)el.value='';});document.getElementById('co-type').value='';document.getElementById('company-modal').classList.add('open');},
+  openEditCompanyModal(id){const c=companies.find(x=>x.id===id);if(!c)return;editingCompanyId=id;document.getElementById('company-modal-title').textContent='編輯廠商：'+c.name;document.getElementById('co-name').value=c.name||'';document.getElementById('co-type').value=c.typeId||'';document.getElementById('co-contact').value=c.contact||'';document.getElementById('co-phone').value=c.phone||'';document.getElementById('co-email').value=c.email||'';document.getElementById('co-note').value=c.note||'';document.getElementById('company-modal').classList.add('open');},
+  async saveCompany(){
+    const name=document.getElementById('co-name').value.trim();if(!name){alert('請填寫廠商名稱');return;}
+    const btn=document.getElementById('company-save-btn');btn.textContent='儲存中...';btn.disabled=true;
+    const data={name,typeId:document.getElementById('co-type').value,contact:document.getElementById('co-contact').value,phone:document.getElementById('co-phone').value,email:document.getElementById('co-email').value,note:document.getElementById('co-note').value,updatedAt:new Date().toISOString()};
+    try{if(editingCompanyId){await db.collection('companies').doc(editingCompanyId).update(data);showToast('已更新廠商');}else{await db.collection('companies').add(data);showToast('已新增廠商');}this.closeModal('company-modal');}catch(e){alert('儲存失敗：'+e.message);}
+    btn.textContent='儲存';btn.disabled=false;
+  },
+  async confirmDeleteCompany(id){const c=companies.find(x=>x.id===id);if(!c)return;if(!confirm('確定要刪除「'+c.name+'」嗎？'))return;try{await db.collection('companies').doc(id).delete();showToast('已刪除廠商');}catch(e){alert('刪除失敗：'+e.message);}},
+
+  // ── Company Type ──────────────────────────────────────
+  openAddCtypeModal(){editingCtypeId=null;document.getElementById('ctype-modal-title').textContent='新增廠商類別';document.getElementById('ct-name').value='';document.getElementById('ct-note').value='';selectedColor='#E6F1FB';document.querySelectorAll('.color-swatch').forEach((s,i)=>{s.classList.toggle('selected',i===0);});document.getElementById('ctype-modal').classList.add('open');},
+  openEditCtypeModal(id){const t=ctypes.find(x=>x.id===id);if(!t)return;editingCtypeId=id;document.getElementById('ctype-modal-title').textContent='編輯類別：'+t.name;document.getElementById('ct-name').value=t.name||'';document.getElementById('ct-note').value=t.note||'';selectedColor=t.color||'#E6F1FB';document.querySelectorAll('.color-swatch').forEach(s=>{s.classList.toggle('selected',s.dataset.color===selectedColor);});document.getElementById('ctype-modal').classList.add('open');},
+  async saveCtype(){
+    const name=document.getElementById('ct-name').value.trim();if(!name){alert('請填寫類別名稱');return;}
+    const btn=document.getElementById('ctype-save-btn');btn.textContent='儲存中...';btn.disabled=true;
+    const data={name,color:selectedColor,note:document.getElementById('ct-note').value,updatedAt:new Date().toISOString()};
+    try{if(editingCtypeId){await db.collection('ctypes').doc(editingCtypeId).update(data);showToast('已更新類別');}else{await db.collection('ctypes').add(data);showToast('已新增類別');}this.closeModal('ctype-modal');}catch(e){alert('儲存失敗：'+e.message);}
+    btn.textContent='儲存';btn.disabled=false;
+  },
+  async confirmDeleteCtype(id){const t=ctypes.find(x=>x.id===id);if(!t)return;const cc=companies.filter(c=>c.typeId===id).length;if(!confirm('確定要刪除「'+t.name+'」嗎？'+(cc>0?'\n（此類別有 '+cc+' 間廠商）':'')))return;try{await db.collection('ctypes').doc(id).delete();showToast('已刪除類別');}catch(e){alert('刪除失敗：'+e.message);}},
 };
 
 document.getElementById('today-date').textContent=new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
