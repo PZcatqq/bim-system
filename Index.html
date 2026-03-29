@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIM 機電專案管控系統</title>
+<style>
+  :root{--bg:#f5f4f0;--surface:#fff;--surface2:#f0efe9;--border:#e0ddd4;--border2:#ccc9be;--text:#1a1a18;--text2:#5a5a54;--text3:#8a8a82;--red:#a32d2d;--red-bg:#fcebeb;--red-border:#f7c1c1;--amber:#854f0b;--amber-bg:#faeeda;--amber-border:#fac775;--green:#3b6d11;--green-bg:#eaf3de;--green-border:#c0dd97;--radius:10px;--radius-sm:6px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,'PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+  .app{display:flex;min-height:100vh;}
+  .sidebar{width:200px;background:var(--surface);border-right:1px solid var(--border);padding:20px 0;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100;}
+  .main{margin-left:200px;flex:1;padding:24px;max-width:1200px;}
+  @media(max-width:768px){
+    .sidebar{width:100%;height:auto;position:relative;border-right:none;border-bottom:1px solid var(--border);padding:6px 0;display:flex;flex-wrap:wrap;align-items:center;}
+    .logo{padding:6px 12px;border-bottom:none;margin-bottom:0;border-right:1px solid var(--border);}
+    .nav-item{padding:7px 9px;font-size:12px;}
+    .nav-section{display:none;}
+    .main{margin-left:0;padding:14px;}
+    .app{flex-direction:column;}
+    .stat-grid{grid-template-columns:repeat(2,1fr)!important;}
+    .proj-meta-grid{grid-template-columns:1fr 1fr!important;}
+    .form-grid{grid-template-columns:1fr!important;}
+  }
+  .logo{padding:0 20px 14px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+  .logo-title{font-size:15px;font-weight:600;}
+  .logo-sub{font-size:10px;color:var(--text3);margin-top:6px;display:flex;align-items:center;gap:5px;}
+  .sync-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0;display:inline-block;}
+  .sync-dot.live{background:#639922;}
+  .sync-dot.syncing{background:#EF9F27;animation:pulse 1s infinite;}
+  .sync-dot.error{background:var(--red);}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:9px 20px;cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;}
+  .nav-item:hover{background:var(--bg);color:var(--text);}
+  .nav-item.active{background:var(--bg);color:var(--text);font-weight:500;border-left:3px solid var(--text);padding-left:17px;}
+  .nav-section{font-size:10px;color:var(--text3);padding:12px 20px 4px;letter-spacing:.08em;}
+  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+  .page-title{font-size:20px;font-weight:600;}
+  .page-sub{font-size:13px;color:var(--text3);margin-top:2px;}
+  .btn{padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit;}
+  .btn:hover{background:var(--bg);}
+  .btn-primary{background:var(--text);color:#fff;border-color:var(--text);}
+  .btn-primary:hover{background:#333;}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+  .stat-label{font-size:12px;color:var(--text3);margin-bottom:6px;}
+  .stat-val{font-size:26px;font-weight:600;}
+  .stat-val.red{color:var(--red);}
+  .stat-val.amber{color:var(--amber);}
+  .stat-hint{font-size:11px;color:var(--text3);margin-top:4px;}
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .section-title{font-size:13px;font-weight:500;color:var(--text2);letter-spacing:.04em;}
+  .alert-list{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;}
+  .alert-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s;}
+  .alert-row:hover{border-color:var(--border2);}
+  .alert-row.urgent{border-left:3px solid var(--red);}
+  .alert-row.warn{border-left:3px solid #EF9F27;}
+  .badge{font-size:11px;font-weight:500;border-radius:4px;padding:3px 8px;white-space:nowrap;flex-shrink:0;}
+  .badge-red{background:var(--red-bg);color:var(--red);}
+  .badge-amber{background:var(--amber-bg);color:var(--amber);}
+  .badge-green{background:var(--green-bg);color:var(--green);}
+  .alert-info{flex:1;min-width:0;}
+  .alert-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .alert-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+  .days-tag{font-size:12px;font-weight:500;white-space:nowrap;flex-shrink:0;}
+  .days-tag.red{color:var(--red);}
+  .days-tag.amber{color:var(--amber);}
+  .proj-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:28px;}
+  .table-scroll{overflow-x:auto;}
+  .proj-table{width:100%;border-collapse:collapse;}
+  .proj-table th{background:var(--surface2);padding:10px 14px;text-align:left;font-size:12px;font-weight:500;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;}
+  .proj-table td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+  .proj-table tr:last-child td{border-bottom:none;}
+  .proj-table tr:hover td{background:var(--bg);}
+  .proj-table tr{cursor:pointer;}
+  .systems{display:flex;gap:4px;}
+  .sys-dot{width:22px;height:22px;border-radius:4px;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+  .sys-dot.got{background:var(--green-bg);color:var(--green);}
+  .sys-dot.partial{background:var(--amber-bg);color:var(--amber);}
+  .sys-dot.missing{background:var(--red-bg);color:var(--red);}
+  .stage-tag{font-size:11px;padding:3px 7px;border-radius:4px;border:1px solid var(--border);color:var(--text2);white-space:nowrap;}
+  .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border-radius:14px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;}
+  .modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;}
+  .modal-title{font-size:18px;font-weight:600;}
+  .modal-sub{font-size:12px;color:var(--text3);margin-top:4px;}
+  .modal-close{font-size:20px;cursor:pointer;color:var(--text3);padding:4px;line-height:1;background:none;border:none;font-family:inherit;}
+  .modal-body{padding:20px 24px;}
+  .proj-meta-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+  .meta-item label{font-size:11px;color:var(--text3);display:block;margin-bottom:4px;}
+  .meta-item span{font-size:14px;font-weight:500;}
+  .divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+  .field-label{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:8px;}
+  .sys-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .sys-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid;}
+  .sys-pill.got{background:var(--green-bg);color:var(--green);border-color:var(--green-border);}
+  .sys-pill.partial{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border);}
+  .sys-pill.missing{background:var(--red-bg);color:var(--red);border-color:var(--red-border);}
+  .task-box{background:var(--bg);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;font-size:13px;color:var(--text2);line-height:1.6;}
+  .note-box{background:#fffbf0;border:1px solid var(--amber-border);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--amber);}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .form-group{display:flex;flex-direction:column;gap:6px;}
+  .form-group.full{grid-column:1/-1;}
+  .form-group label{font-size:12px;color:var(--text2);font-weight:500;}
+  .form-group input,.form-group select,.form-group textarea{padding:8px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;background:var(--surface);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#888;}
+  .form-group textarea{resize:vertical;min-height:70px;}
+  .sys-check-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .sys-check{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;font-size:13px;transition:all .15s;user-select:none;}
+  .sys-check.checked{background:var(--green-bg);color:var(--green);border-color:var(--green-border);}
+  .sys-check.partial-check{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-border);}
+  .form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+  .empty{text-align:center;padding:40px;color:var(--text3);font-size:14px;}
+  .loading-cell{text-align:center;padding:30px;color:var(--text3);}
+  .page{display:none;}
+  .page.active{display:block;}
+  .search-bar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap;}
+  .search-bar input{flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;outline:none;background:var(--surface);font-family:inherit;}
+  .filter-pills{display:flex;gap:6px;flex-wrap:wrap;}
+  .filter-pill{padding:4px 10px;border-radius:20px;border:1px solid var(--border2);font-size:12px;cursor:pointer;color:var(--text2);transition:all .15s;}
+  .filter-pill.active{background:var(--text);color:#fff;border-color:var(--text);}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-title">BIM 機電管控</div>
+      <div class="logo-sub"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">連線中...</span></div>
+    </div>
+    <div class="nav-item active" id="nav-dashboard" onclick="BIM.showPage('dashboard')"><span>◉</span>儀表板</div>
+    <div class="nav-item" id="nav-projects" onclick="BIM.showPage('projects')"><span>▦</span>所有專案</div>
+    <div class="nav-item" id="nav-alerts" onclick="BIM.showPage('alerts')"><span>⚑</span>警示追蹤</div>
+    <div class="nav-section">操作</div>
+    <div class="nav-item" onclick="BIM.openAddModal()"><span>＋</span>新增專案</div>
+  </div>
+
+  <div class="main">
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div><div class="page-title">儀表板</div><div class="page-sub" id="today-date"></div></div>
+        <button class="btn btn-primary btn-sm" onclick="BIM.openAddModal()">＋ 新增專案</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">進行中專案</div><div class="stat-val" id="stat-total">—</div><div class="stat-hint">全部專案數</div></div>
+        <div class="stat-card"><div class="stat-label">緊急警示</div><div class="stat-val red" id="stat-urgent">—</div><div class="stat-hint">需立即處理</div></div>
+        <div class="stat-card"><div class="stat-label">圖資待追蹤</div><div class="stat-val amber" id="stat-nodoc">—</div><div class="stat-hint">至少一系統未取得</div></div>
+        <div class="stat-card"><div class="stat-label">本月截止</div><div class="stat-val" id="stat-month">—</div><div class="stat-hint">30天內到期</div></div>
+      </div>
+      <div class="section-header"><div class="section-title">需要立即處理的警示</div></div>
+      <div class="alert-list" id="dash-alerts"><div class="empty">載入中...</div></div>
+      <div class="section-header">
+        <div class="section-title">所有專案概況</div>
+        <button class="btn btn-sm" onclick="BIM.showPage('projects')">查看全部</button>
+      </div>
+      <div class="proj-table-wrap table-scroll">
+        <table class="proj-table"><thead><tr><th>專案名稱</th><th>機電主辦</th><th>目前階段</th><th>截止日期</th><th>圖資（電消給汙空）</th><th>狀態</th></tr></thead>
+        <tbody id="dash-proj-body"><tr><td colspan="6" class="loading-cell">載入中...</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="page" id="page-projects">
+      <div class="page-header">
+        <div><div class="page-title">所有專案</div></div>
+        <button class="btn btn-primary btn-sm" onclick="BIM.openAddModal()">＋ 新增專案</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" placeholder="搜尋專案名稱、主辦..." id="search-input" oninput="BIM.renderProjects()">
+        <div class="filter-pills">
+          <div class="filter-pill active" onclick="BIM.setFilter('all',this)">全部</div>
+          <div class="filter-pill" onclick="BIM.setFilter('施工',this)">施工中</div>
+          <div class="filter-pill" onclick="BIM.setFilter('細設',this)">細設</div>
+          <div class="filter-pill" onclick="BIM.setFilter('基設',this)">基設</div>
+          <div class="filter-pill" onclick="BIM.setFilter('竣工',this)">竣工</div>
+        </div>
+      </div>
+      <div class="proj-table-wrap table-scroll">
+        <table class="proj-table"><thead><tr><th>專案名稱</th><th>專案主辦</th><th>機電主辦</th><th>目前階段</th><th>截止日期</th><th>施工樓層</th><th>圖資（電消給汙空）</th><th>模型現況</th><th>狀態</th></tr></thead>
+        <tbody id="proj-body"><tr><td colspan="9" class="loading-cell">載入中...</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <div class="page" id="page-alerts">
+      <div class="page-header"><div><div class="page-title">警示追蹤</div><div class="page-sub">依緊急程度排列</div></div></div>
+      <div class="alert-list" id="all-alerts"><div class="empty">載入中...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detail-modal" onclick="if(event.target===this)BIM.closeModal('detail-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title" id="detail-title"></div><div class="modal-sub" id="detail-sub"></div></div>
+      <button class="modal-close" onclick="BIM.closeModal('detail-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="add-modal" onclick="if(event.target===this)BIM.closeModal('add-modal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title" id="add-modal-title">新增專案</div></div>
+      <button class="modal-close" onclick="BIM.closeModal('add-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>專案名稱 *</label><input id="f-name" placeholder="例：明新、大華"></div>
+        <div class="form-group"><label>合約範圍</label><input id="f-contract" placeholder="例：全系統竣工"></div>
+        <div class="form-group"><label>專案主辦</label><input id="f-owner" placeholder="例：柏仰"></div>
+        <div class="form-group"><label>機電主辦</label><input id="f-mep" placeholder="例：昱安"></div>
+        <div class="form-group"><label>目前階段</label>
+          <select id="f-stage"><option>基設(不分階)</option><option>細設一階</option><option>細設二階</option><option>細設三階</option><option>細設(不分階)</option><option>施工階段</option><option>竣工階段</option><option>金質獎</option></select>
+        </div>
+        <div class="form-group"><label>目前施工樓層</label><input id="f-floor" placeholder="例：已到B1樓版"></div>
+        <div class="form-group"><label>下階段截止日期</label><input type="date" id="f-deadline"></div>
+        <div class="form-group"><label>最後完工日期</label><input type="date" id="f-final"></div>
+        <div class="form-group full">
+          <label>圖資取得狀況（點擊切換：未取得 → 部分取得 → 已取得）</label>
+          <div class="sys-check-row">
+            <div class="sys-check" id="sc-電" onclick="BIM.toggleSys('電')">電</div>
+            <div class="sys-check" id="sc-消" onclick="BIM.toggleSys('消')">消</div>
+            <div class="sys-check" id="sc-給" onclick="BIM.toggleSys('給')">給</div>
+            <div class="sys-check" id="sc-汙" onclick="BIM.toggleSys('汙')">汙</div>
+            <div class="sys-check" id="sc-空" onclick="BIM.toggleSys('空')">空</div>
+          </div>
+        </div>
+        <div class="form-group full"><label>圖資狀況說明</label><input id="f-doc-note" placeholder="例：9/30取得細設三階全部圖說"></div>
+        <div class="form-group full"><label>模型現況</label><input id="f-model" placeholder="例：全棟全系統已建置"></div>
+        <div class="form-group full"><label>作業內容範圍</label><textarea id="f-task-scope" placeholder="例：全棟建築、結構、機電"></textarea></div>
+        <div class="form-group full"><label>已完成事項</label><textarea id="f-task-done" placeholder="例：7F已調整完畢"></textarea></div>
+        <div class="form-group full"><label>未完成事項</label><textarea id="f-task-todo" placeholder="例：其他樓層各系統待處理"></textarea></div>
+        <div class="form-group full"><label>專案備註</label><textarea id="f-note" placeholder="例：現場停工，等待設計核定"></textarea></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn" onclick="BIM.closeModal('add-modal')">取消</button>
+        <button class="btn btn-primary" id="save-btn" onclick="BIM.saveProject()">儲存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase (non-module, using compat SDK so window.BIM works everywhere) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyBJFSB5Ds0QgZxW5RX68C40z6MnfFznG3I",
+  authDomain:"bim-project-control.firebaseapp.com",
+  projectId:"bim-project-control",
+  storageBucket:"bim-project-control.firebasestorage.app",
+  messagingSenderId:"957769782377",
+  appId:"1:957769782377:web:492f69c36f0247006efef8"
+});
+const db = firebase.firestore();
+const colRef = db.collection("projects");
+
+const SYS = ['電','消','給','汙','空'];
+let projects = [], editingId = null, stageFilter = 'all';
+let sysState = {電:'missing',消:'missing',給:'missing',汙:'missing',空:'missing'};
+
+// ── Sync status ───────────────────────────────────────
+function setSyncStatus(s){
+  document.getElementById('sync-dot').className = 'sync-dot '+s;
+  document.getElementById('sync-label').textContent = s==='live'?'即時同步中':s==='syncing'?'同步中...':'連線失敗';
+}
+setSyncStatus('syncing');
+
+// ── Realtime listener ─────────────────────────────────
+colRef.onSnapshot(snap=>{
+  projects = snap.docs.map(d=>({id:d.id,...d.data()}));
+  setSyncStatus('live');
+  renderAll();
+}, e=>{ setSyncStatus('error'); console.error(e); });
+
+// ── Helpers ───────────────────────────────────────────
+function parseDate(s){if(!s)return null;const[y,m,d]=s.split('-');return new Date(y,m-1,d);}
+function daysUntil(s){if(!s)return null;const d=parseDate(s);return d?Math.round((d-new Date())/86400000):null;}
+function formatDate(s){if(!s)return'—';const d=parseDate(s);return`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;}
+function alertLevel(p){
+  const days=daysUntil(p.deadline), miss=SYS.filter(k=>p.systems?.[k]==='missing').length;
+  if(days!==null&&days<0)return'urgent';
+  if(days!==null&&days<=7)return'urgent';
+  if(miss>=4&&(p.stage||'').includes('施工'))return'urgent';
+  if(days!==null&&days<=21)return'warn';
+  if(miss>=2)return'warn';
+  return'ok';
+}
+function alertMsg(p){
+  const days=daysUntil(p.deadline), miss=SYS.filter(k=>p.systems?.[k]==='missing').length, msgs=[];
+  if(days!==null&&days<0)msgs.push('截止日已逾期'+Math.abs(days)+'天');
+  else if(days!==null&&days<=21)msgs.push('截止日剩'+days+'天');
+  if(miss>0)msgs.push(miss+'個系統圖資未取得');
+  if(p.todo)msgs.push(p.todo.slice(0,40));
+  return msgs.join('・')||'進度正常';
+}
+function sysDots(sys){return SYS.map(k=>{const s=sys?.[k]||'missing';return`<div class="sys-dot ${s}" title="${k}：${s==='got'?'已取得':s==='partial'?'部分取得':'未取得'}">${s==='got'?'✓':s==='partial'?'△':'✕'}</div>`;}).join('');}
+function statusBadge(p){const lv=alertLevel(p);return lv==='urgent'?'<span class="badge badge-red">緊急</span>':lv==='warn'?'<span class="badge badge-amber">注意</span>':'<span class="badge badge-green">正常</span>';}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ── Render ────────────────────────────────────────────
+function renderAll(){renderStats();renderDashAlerts();renderDashTable();renderProjects();renderAllAlerts();}
+function renderStats(){
+  document.getElementById('stat-total').textContent=projects.length;
+  document.getElementById('stat-urgent').textContent=projects.filter(p=>alertLevel(p)==='urgent').length;
+  document.getElementById('stat-nodoc').textContent=projects.filter(p=>SYS.some(k=>p.systems?.[k]==='missing')).length;
+  document.getElementById('stat-month').textContent=projects.filter(p=>{const d=daysUntil(p.deadline);return d!==null&&d>=0&&d<=30;}).length;
+}
+function alertRowHTML(p){
+  const lv=alertLevel(p),days=daysUntil(p.deadline);
+  const dt=days!==null?(days<0?`<span class="days-tag red">逾期${Math.abs(days)}天</span>`:`<span class="days-tag ${lv==='urgent'?'red':'amber'}">剩${days}天</span>`):'';
+  return`<div class="alert-row ${lv}" onclick="BIM.openDetail('${p.id}')">
+    ${lv==='urgent'?'<span class="badge badge-red">緊急</span>':'<span class="badge badge-amber">注意</span>'}
+    <div class="alert-info"><div class="alert-name">${p.name}&nbsp;<span style="font-size:12px;font-weight:400;color:var(--text2)">${p.stage||''}</span></div><div class="alert-sub">${alertMsg(p)}</div></div>
+    ${dt}</div>`;
+}
+function renderDashAlerts(){
+  const list=projects.filter(p=>alertLevel(p)!=='ok').sort((a,b)=>({urgent:0,warn:1,ok:2}[alertLevel(a)]-{urgent:0,warn:1,ok:2}[alertLevel(b)]));
+  document.getElementById('dash-alerts').innerHTML=list.length?list.map(alertRowHTML).join(''):'<div class="empty">目前沒有警示 🎉</div>';
+}
+function renderDashTable(){
+  const list=[...projects].sort((a,b)=>({urgent:0,warn:1,ok:2}[alertLevel(a)]-{urgent:0,warn:1,ok:2}[alertLevel(b)]));
+  document.getElementById('dash-proj-body').innerHTML=list.map(p=>`<tr onclick="BIM.openDetail('${p.id}')"><td><strong>${p.name}</strong></td><td>${p.mep||'—'}</td><td><span class="stage-tag">${p.stage||'—'}</span></td><td>${formatDate(p.deadline)}</td><td><div class="systems">${sysDots(p.systems)}</div></td><td>${statusBadge(p)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">尚無專案</td></tr>';
+}
+function renderProjects(){
+  const q=(document.getElementById('search-input')?.value||'').toLowerCase();
+  const list=projects.filter(p=>(p.name+p.owner+p.mep).toLowerCase().includes(q)&&(stageFilter==='all'||(p.stage||'').includes(stageFilter)));
+  document.getElementById('proj-body').innerHTML=list.map(p=>`<tr onclick="BIM.openDetail('${p.id}')">
+    <td><strong>${p.name}</strong>${p.contract?`<div style="font-size:11px;color:var(--text3);margin-top:2px">${p.contract}</div>`:''}</td>
+    <td>${p.owner||'—'}</td><td>${p.mep||'—'}</td><td><span class="stage-tag">${p.stage||'—'}</span></td>
+    <td>${formatDate(p.deadline)}</td><td style="font-size:12px;color:var(--text2)">${p.floor||'—'}</td>
+    <td><div class="systems">${sysDots(p.systems)}</div></td>
+    <td style="font-size:12px;color:var(--text2);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.model||'—'}</td>
+    <td>${statusBadge(p)}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">找不到符合的專案</td></tr>';
+}
+function renderAllAlerts(){
+  const list=projects.filter(p=>alertLevel(p)!=='ok').sort((a,b)=>({urgent:0,warn:1}[alertLevel(a)]-{urgent:0,warn:1}[alertLevel(b)]));
+  document.getElementById('all-alerts').innerHTML=list.length?list.map(alertRowHTML).join(''):'<div class="empty">目前沒有警示 🎉</div>';
+}
+
+// ── BIM namespace (accessible from onclick) ───────────
+window.BIM = {
+  showPage(name){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+name)?.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById('nav-'+name)?.classList.add('active');
+  },
+  setFilter(val,el){
+    stageFilter=val;
+    document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
+    el.classList.add('active');
+    renderProjects();
+  },
+  closeModal(id){ document.getElementById(id)?.classList.remove('open'); },
+  openAddModal(){
+    editingId=null;
+    document.getElementById('add-modal-title').textContent='新增專案';
+    ['name','contract','owner','mep','floor','deadline','final','doc-note','model','task-scope','task-done','task-todo','note'].forEach(k=>{const el=document.getElementById('f-'+k);if(el)el.value='';});
+    document.getElementById('f-stage').value='施工階段';
+    sysState={電:'missing',消:'missing',給:'missing',汙:'missing',空:'missing'};
+    SYS.forEach(k=>{const el=document.getElementById('sc-'+k);el.className='sys-check';el.textContent=k;});
+    this.closeModal('detail-modal');
+    document.getElementById('add-modal').classList.add('open');
+  },
+  openEditModal(id){
+    const p=projects.find(x=>x.id===id);if(!p)return;
+    editingId=id;
+    document.getElementById('add-modal-title').textContent='編輯專案：'+p.name;
+    document.getElementById('f-name').value=p.name||'';
+    document.getElementById('f-contract').value=p.contract||'';
+    document.getElementById('f-owner').value=p.owner||'';
+    document.getElementById('f-mep').value=p.mep||'';
+    document.getElementById('f-stage').value=p.stage||'施工階段';
+    document.getElementById('f-floor').value=p.floor||'';
+    document.getElementById('f-deadline').value=p.deadline||'';
+    document.getElementById('f-final').value=p.final||'';
+    document.getElementById('f-doc-note').value=p.docNote||'';
+    document.getElementById('f-model').value=p.model||'';
+    document.getElementById('f-task-scope').value=p.scope||'';
+    document.getElementById('f-task-done').value=p.done||'';
+    document.getElementById('f-task-todo').value=p.todo||'';
+    document.getElementById('f-note').value=p.note||'';
+    sysState={...(p.systems||{電:'missing',消:'missing',給:'missing',汙:'missing',空:'missing'})};
+    SYS.forEach(k=>{const el=document.getElementById('sc-'+k),st=sysState[k];el.className='sys-check'+(st==='got'?' checked':st==='partial'?' partial-check':'');el.textContent=k+(st==='got'?' ✓':st==='partial'?' △':'');});
+    this.closeModal('detail-modal');
+    document.getElementById('add-modal').classList.add('open');
+  },
+  async saveProject(){
+    const name=document.getElementById('f-name').value.trim();
+    if(!name){alert('請填寫專案名稱');return;}
+    const btn=document.getElementById('save-btn');btn.textContent='儲存中...';btn.disabled=true;
+    const data={name,contract:document.getElementById('f-contract').value,owner:document.getElementById('f-owner').value,mep:document.getElementById('f-mep').value,stage:document.getElementById('f-stage').value,floor:document.getElementById('f-floor').value,deadline:document.getElementById('f-deadline').value,final:document.getElementById('f-final').value,systems:{...sysState},docNote:document.getElementById('f-doc-note').value,model:document.getElementById('f-model').value,scope:document.getElementById('f-task-scope').value,done:document.getElementById('f-task-done').value,todo:document.getElementById('f-task-todo').value,note:document.getElementById('f-note').value,updatedAt:new Date().toISOString()};
+    try{
+      if(editingId){await colRef.doc(editingId).update(data);showToast('已更新專案');}
+      else{await colRef.add(data);showToast('已新增專案');}
+      this.closeModal('add-modal');
+    }catch(e){alert('儲存失敗：'+e.message);}
+    btn.textContent='儲存';btn.disabled=false;
+  },
+  async confirmDelete(id){
+    const p=projects.find(x=>x.id===id);if(!p)return;
+    if(!confirm('確定要刪除「'+p.name+'」嗎？'))return;
+    try{await colRef.doc(id).delete();this.closeModal('detail-modal');showToast('已刪除專案');}
+    catch(e){alert('刪除失敗：'+e.message);}
+  },
+  toggleSys(key){
+    const order=['missing','partial','got'];
+    sysState[key]=order[(order.indexOf(sysState[key])+1)%3];
+    const el=document.getElementById('sc-'+key),st=sysState[key];
+    el.className='sys-check'+(st==='got'?' checked':st==='partial'?' partial-check':'');
+    el.textContent=key+(st==='got'?' ✓':st==='partial'?' △':'');
+  },
+  openDetail(id){
+    const p=projects.find(x=>x.id===id);if(!p)return;
+    document.getElementById('detail-title').textContent=p.name;
+    document.getElementById('detail-sub').textContent=(p.contract||'')+' ｜ 專案主辦：'+(p.owner||'—')+' ｜ 機電主辦：'+(p.mep||'—');
+    const days=daysUntil(p.deadline);
+    const dc=days!==null&&days<=7?'var(--red)':days!==null&&days<=21?'var(--amber)':'var(--text)';
+    const pills=SYS.map(k=>{const s=p.systems?.[k]||'missing';return`<div class="sys-pill ${s}">${k} ${s==='got'?'已取得':s==='partial'?'部分取得':'未取得'}</div>`;}).join('');
+    document.getElementById('detail-body').innerHTML=`
+      <div class="proj-meta-grid">
+        <div class="meta-item"><label>目前階段</label><span>${p.stage||'—'}</span></div>
+        <div class="meta-item"><label>截止日期</label><span style="color:${dc}">${formatDate(p.deadline)}${days!==null?' ('+( days<0?'逾期'+Math.abs(days)+'天':'剩'+days+'天')+')':''}</span></div>
+        <div class="meta-item"><label>最後完工日</label><span>${formatDate(p.final)}</span></div>
+        <div class="meta-item"><label>目前施工樓層</label><span>${p.floor||'—'}</span></div>
+        <div class="meta-item"><label>模型現況</label><span>${p.model||'—'}</span></div>
+      </div>
+      <hr class="divider">
+      <div class="field-label">圖資取得狀況</div>
+      <div class="sys-row">${pills}</div>
+      ${p.docNote?'<div class="task-box">'+p.docNote+'</div>':''}
+      <hr class="divider">
+      ${p.scope?'<div class="field-label">作業範圍</div><div class="task-box">'+p.scope+'</div>':''}
+      ${p.done?'<div class="field-label">已完成</div><div class="task-box" style="border-left:3px solid var(--green)">'+p.done+'</div>':''}
+      ${p.todo?'<div class="field-label">未完成 / 待辦</div><div class="task-box" style="border-left:3px solid var(--red)">'+p.todo+'</div>':''}
+      ${p.note?'<hr class="divider"><div class="note-box">備註：'+p.note+'</div>':''}
+      <div style="display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <button class="btn btn-sm" onclick="BIM.openEditModal('`+id+`')">✏️ 編輯</button>
+        <button class="btn btn-sm" style="color:var(--red);border-color:var(--red-border)" onclick="BIM.confirmDelete('`+id+`')">🗑 刪除</button>
+      </div>`;
+    document.getElementById('detail-modal').classList.add('open');
+  }
+};
+
+document.getElementById('today-date').textContent = new Date().toLocaleDateString('zh-TW',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+</script>
+</body>
+</html>
